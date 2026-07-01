@@ -1,0 +1,8 @@
+# Nur die veröffentlichte index.html + README gehören ins Repo.
+.claude/
+.DS_Store
+*.log
+
+# Arbeitskopie & Sicherung bleiben lokal (index.html ist die veröffentlichte Version)
+CA-AV3_Digital-Abenteuer_BACKUP-original.html
+CA-AV3_Digital-Abenteuer.html

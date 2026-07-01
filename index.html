@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CA AV3 – Das große Digital-Abenteuer</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card2:#273449; --line:#334155;
+    --text:#e2e8f0; --muted:#94a3b8;
+    --teal:#14b8a6; --teal-d:#0d9488; --blue:#3b82f6; --violet:#8b5cf6;
+    --amber:#f59e0b; --green:#22c55e; --red:#ef4444; --pink:#ec4899;
+    --gold:#fbbf24;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);
+    color:var(--text);line-height:1.5;-webkit-text-size-adjust:100%}
+  h1,h2,h3{margin:0 0 .4em}
+  button{font-family:inherit;cursor:pointer}
+  .wrap{max-width:920px;margin:0 auto;padding:0 14px 90px}
+
+  /* ---------- HUD ---------- */
+  #hud{position:sticky;top:0;z-index:50;background:rgba(15,23,42,.96);
+    backdrop-filter:blur(6px);border-bottom:2px solid var(--line)}
+  .hud-in{max-width:920px;margin:0 auto;display:flex;align-items:center;gap:10px;
+    flex-wrap:wrap;padding:8px 14px}
+  .hud-name{font-weight:700;font-size:1rem;display:flex;align-items:center;gap:6px}
+  .chip{display:inline-flex;align-items:center;gap:5px;background:var(--card2);
+    border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-weight:700;
+    font-size:.95rem}
+  .chip.pts{color:var(--gold);border-color:#4d3b12;background:#2a230f}
+  .chip.rank{color:var(--teal)}
+  .hud-spacer{flex:1}
+  .hud-bar{height:8px;background:var(--card2);border-radius:999px;overflow:hidden;
+    flex-basis:100%;margin-top:2px}
+  .hud-bar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--blue));
+    transition:width .5s}
+  .mini-btn{background:var(--card2);border:1px solid var(--line);color:var(--muted);
+    border-radius:8px;padding:4px 9px;font-size:.8rem}
+  .mini-btn:hover{color:var(--text)}
+
+  /* ---------- generic ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:20px;margin:16px 0;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .btn{background:var(--teal);color:#04211d;border:none;border-radius:12px;
+    padding:12px 20px;font-size:1.05rem;font-weight:800}
+  .btn:hover{background:var(--teal-d)}
+  .btn.ghost{background:transparent;color:var(--text);border:2px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--teal)}
+  .btn.block{display:block;width:100%;margin-top:8px}
+  .center{text-align:center}
+  .muted{color:var(--muted)}
+  .pill{display:inline-block;background:var(--card2);border:1px solid var(--line);
+    border-radius:999px;padding:3px 12px;font-size:.8rem;font-weight:700;margin:2px}
+  .tag-c{color:var(--violet);border-color:#3b2a52}
+  .hidden{display:none!important}
+
+  /* ---------- start ---------- */
+  .hero{text-align:center;padding:34px 16px 8px}
+  .hero .big{font-size:2.1rem;font-weight:900;
+    background:linear-gradient(90deg,var(--teal),var(--blue),var(--violet));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .save-banner{background:#3a2a09;border:2px solid var(--amber);color:#fde68a;
+    border-radius:14px;padding:14px 16px;margin:16px 0;font-size:.98rem}
+  .save-banner b{color:#fff}
+  input[type=text]{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);
+    background:var(--card2);color:var(--text);font-size:1.1rem}
+  input[type=text]:focus{outline:none;border-color:var(--teal)}
+  .save-state{font-size:.85rem;margin-top:8px}
+  .ok{color:var(--green)} .bad{color:var(--red)}
+
+  /* ---------- worldmap ---------- */
+  .worlds{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+  .world-card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:16px;cursor:pointer;transition:transform .12s,border-color .12s;position:relative;overflow:hidden}
+  .world-card:hover{transform:translateY(-3px);border-color:var(--teal)}
+  .world-card .wc-emoji{font-size:2.3rem}
+  .world-card h3{margin:6px 0 2px;font-size:1.15rem}
+  .world-card .wc-bpe{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .stars{font-size:1.1rem;margin-top:8px;letter-spacing:2px}
+  .wc-prog{height:6px;background:var(--card2);border-radius:999px;margin-top:10px;overflow:hidden}
+  .wc-prog>span{display:block;height:100%;background:var(--teal)}
+  .wc-lock{position:absolute;inset:0;background:rgba(15,23,42,.72);display:flex;
+    align-items:center;justify-content:center;font-size:1.6rem;flex-direction:column;gap:4px}
+  .wc-badge{position:absolute;top:8px;right:10px;font-size:1.3rem}
+
+  /* ---------- activity ---------- */
+  .act{border-left:5px solid var(--line)}
+  .act.done{border-left-color:var(--green)}
+  .act .a-type{font-size:.74rem;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);
+    font-weight:800}
+  .act .q{font-size:1.12rem;font-weight:700;margin:6px 0 12px}
+  .opt{display:block;width:100%;text-align:left;background:var(--card2);border:2px solid var(--line);
+    color:var(--text);border-radius:12px;padding:12px 14px;margin:7px 0;font-size:1rem}
+  .opt:hover{border-color:var(--teal)}
+  .opt.sel{border-color:var(--blue)}
+  .opt.correct{border-color:var(--green);background:#0e2e1c}
+  .opt.wrong{border-color:var(--red);background:#2e1414}
+  .opt.disabled{opacity:.85;cursor:default}
+  .fb{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:.97rem;display:none}
+  .fb.show{display:block}
+  .fb.good{background:#0e2e1c;border:1px solid var(--green)}
+  .fb.bad{background:#2e1414;border:1px solid var(--red)}
+  .a-foot{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .hintbtn{background:#2a230f;border:1px solid var(--amber);color:var(--gold);border-radius:10px;
+    padding:8px 12px;font-weight:700;font-size:.85rem}
+  .hintbtn:disabled{opacity:.5;cursor:default}
+  .hintbox{background:#2a230f;border:1px dashed var(--amber);color:#fde68a;border-radius:10px;
+    padding:10px 12px;margin-top:8px;font-size:.92rem;display:none}
+  .hintbox.show{display:block}
+  .checkbtn{background:var(--blue);color:#03152e;border:none;border-radius:10px;padding:10px 16px;
+    font-weight:800}
+  .checkbtn:hover{filter:brightness(1.1)}
+  .a-pts{margin-left:auto;font-weight:800;color:var(--gold);font-size:.9rem}
+
+  /* match / connect */
+  .match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .m-col{display:flex;flex-direction:column;gap:8px}
+  .m-item{background:var(--card2);border:2px solid var(--line);border-radius:10px;padding:11px 12px;
+    text-align:center;font-weight:600}
+  .m-item:hover{border-color:var(--teal)}
+  .m-item.picked{border-color:var(--blue);background:#12233f}
+  .m-item.linked{border-color:var(--green);background:#0e2e1c;cursor:default}
+  .m-item.badlink{border-color:var(--red);background:#2e1414}
+  .m-item .lbl{display:inline-block;min-width:20px;height:20px;border-radius:50%;background:var(--teal);
+    color:#04211d;font-size:.75rem;font-weight:800;line-height:20px;margin-left:6px}
+
+  /* order */
+  .order-list{display:flex;flex-direction:column;gap:8px}
+  .o-item{display:flex;align-items:center;gap:10px;background:var(--card2);border:2px solid var(--line);
+    border-radius:10px;padding:10px 12px}
+  .o-item.correct{border-color:var(--green)}
+  .o-item.wrong{border-color:var(--red)}
+  .o-num{width:26px;height:26px;border-radius:8px;background:var(--card);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 auto}
+  .o-move{margin-left:auto;display:flex;gap:4px}
+  .o-move button{width:34px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);
+    color:var(--text);font-weight:800}
+  .o-move button:hover{border-color:var(--teal)}
+
+  /* buckets */
+  .bucket-items{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+  .b-item{background:var(--card2);border:2px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:600}
+  .b-item.picked{border-color:var(--blue);background:#12233f}
+  .b-item.placed{opacity:.45}
+  .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .bucket{background:var(--card2);border:2px dashed var(--line);border-radius:12px;padding:10px;min-height:90px}
+  .bucket h4{margin:0 0 6px;text-align:center;font-size:.95rem}
+  .bucket.over{border-color:var(--teal)}
+  .drop-chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;
+    margin:4px;display:inline-block;font-size:.9rem}
+  .drop-chip.correct{border-color:var(--green);background:#0e2e1c}
+  .drop-chip.wrong{border-color:var(--red);background:#2e1414}
+
+  /* cloze / short */
+  .cloze{font-size:1.08rem;line-height:2.1}
+  .cloze select{background:var(--card2);color:var(--text);border:2px solid var(--blue);border-radius:8px;
+    padding:5px 8px;font-size:1rem;margin:0 3px}
+  .cloze select.correct{border-color:var(--green)} .cloze select.wrong{border-color:var(--red)}
+  textarea{width:100%;min-height:80px;background:var(--card2);color:var(--text);border:2px solid var(--line);
+    border-radius:12px;padding:11px 13px;font-size:1rem;font-family:inherit;resize:vertical}
+  textarea:focus{outline:none;border-color:var(--teal)}
+
+  /* tf set */
+  .tf-row{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;margin:7px 0}
+  .tf-row .st{flex:1}
+  .tf-btn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;
+    padding:7px 12px;font-weight:800;font-size:.85rem}
+  .tf-btn.sel{border-color:var(--blue);background:#12233f}
+  .tf-btn.correct{border-color:var(--green);background:#0e2e1c}
+  .tf-btn.wrong{border-color:var(--red);background:#2e1414}
+
+  /* memory */
+  .mem-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media(max-width:520px){.mem-grid{grid-template-columns:repeat(3,1fr)}.match-grid{gap:6px}}
+  .mem-card{aspect-ratio:1/1;background:var(--card2);border:2px solid var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;font-weight:700;
+    font-size:.82rem;user-select:none}
+  .mem-card .front{color:var(--muted);font-size:1.5rem}
+  .mem-card.flip{border-color:var(--blue);background:#12233f}
+  .mem-card.matched{border-color:var(--green);background:#0e2e1c;cursor:default}
+
+  /* password */
+  .pw-meter{height:12px;background:var(--card2);border-radius:999px;overflow:hidden;margin:10px 0}
+  .pw-meter>span{display:block;height:100%;width:0;transition:width .3s,background .3s}
+  .pw-checks{list-style:none;padding:0;margin:8px 0;font-size:.92rem}
+  .pw-checks li{padding:2px 0}
+  .pw-checks li::before{content:"⚪ ";}
+  .pw-checks li.ok::before{content:"✅ ";}
+
+  /* sim */
+  .sim-scene{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px;
+    font-size:1.03rem;margin-bottom:10px}
+  .sim-choice{display:block;width:100%;text-align:left;background:var(--card2);border:2px solid var(--line);
+    color:var(--text);border-radius:12px;padding:12px 14px;margin:7px 0;font-size:1rem}
+  .sim-choice:hover{border-color:var(--teal)}
+
+  /* fakespot */
+  .fake-web{background:#f8fafc;color:#0f172a;border-radius:12px;overflow:hidden;border:1px solid #cbd5e1}
+  .fake-bar{background:#e2e8f0;padding:8px 12px;font-size:.85rem;font-family:monospace}
+  .fake-body{padding:14px}
+  .fake-el{border:2px solid transparent;border-radius:8px;padding:6px 8px;margin:6px 0;cursor:pointer}
+  .fake-el:hover{background:#fef9c3}
+  .fake-el.picked{border-color:#2563eb;background:#dbeafe}
+  .fake-el.hit{border-color:#16a34a;background:#dcfce7}
+  .fake-el.miss{border-color:#dc2626;background:#fee2e2}
+
+  /* toast + badges */
+  #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(140%);
+    background:var(--card);border:2px solid var(--teal);border-radius:14px;padding:12px 20px;
+    font-weight:800;z-index:100;transition:transform .35s;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:90%}
+  #toast.show{transform:translateX(-50%) translateY(0)}
+  .badge-wall{display:flex;flex-wrap:wrap;gap:10px}
+  .badge{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;
+    text-align:center;width:120px}
+  .badge.locked{opacity:.35}
+  .badge .b-ic{font-size:1.8rem}
+  .badge .b-nm{font-size:.78rem;font-weight:700;margin-top:4px}
+
+  /* report */
+  table.rep{width:100%;border-collapse:collapse;font-size:.95rem}
+  table.rep th,table.rep td{border:1px solid var(--line);padding:9px 10px;text-align:left}
+  table.rep th{background:var(--card2)}
+  .cert{background:linear-gradient(135deg,#0d9488,#1e40af);border-radius:18px;padding:26px;text-align:center;
+    border:3px solid var(--gold)}
+  .cert .ct{font-size:1.5rem;font-weight:900}
+
+  .navrow{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+  footer{color:var(--muted);font-size:.8rem;text-align:center;padding:20px 10px 40px}
+
+  /* ---------- settings / accessibility ---------- */
+  body.big{font-size:1.16rem}
+  body.big .btn{font-size:1.15rem}
+  body.calm .world-card:hover{transform:none}
+  .spk{background:var(--card2);border:1px solid var(--line);color:var(--muted);border-radius:10px;
+    padding:8px 11px;font-weight:700;font-size:.85rem}
+  .spk:hover{color:var(--text);border-color:var(--teal)}
+  .spk.on{color:var(--teal);border-color:var(--teal);background:#0d2b28}
+  .mini-btn.on{color:var(--teal);border-color:var(--teal)}
+  .retrybtn{background:#241a38;border:1px solid var(--violet);color:#d8b4fe;border-radius:10px;
+    padding:8px 12px;font-weight:700;font-size:.85rem}
+  .retrybtn:hover{filter:brightness(1.18)}
+  .abbr{border-bottom:1px dotted var(--teal);cursor:help}
+
+  /* ---------- celebrate / confetti ---------- */
+  #celebrate{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+    pointer-events:none;opacity:0;transition:opacity .3s}
+  #celebrate.show{opacity:1}
+  #celebrate .cbox{background:var(--card);border:3px solid var(--gold);border-radius:20px;
+    padding:24px 32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.55);transform:scale(.85);
+    transition:transform .3s}
+  #celebrate.show .cbox{transform:scale(1)}
+  #celebrate .cbig{font-size:1.5rem;font-weight:900;color:var(--gold);margin-top:4px}
+  .confetti{position:fixed;top:-14px;width:9px;height:15px;z-index:199;pointer-events:none;border-radius:2px;
+    animation:cfall linear forwards}
+  @keyframes cfall{to{transform:translateY(112vh) rotate(560deg);opacity:.15}}
+
+  /* ---------- livecell (Mini-Excel) ---------- */
+  .xl-tab{border-collapse:collapse;margin:4px 0 12px;font-size:1rem}
+  .xl-tab th,.xl-tab td{border:1px solid var(--line);padding:8px 12px;text-align:center;min-width:64px}
+  .xl-tab th{background:var(--card2);color:var(--muted);font-weight:700}
+  .xl-corner,.xl-rownum{background:var(--card);color:var(--muted);min-width:26px;width:26px}
+  .xl-cell{background:var(--card);color:var(--text)}
+  .xl-target{background:#4d3b12;color:#fff;font-weight:800;border:2px solid var(--gold)}
+  .xl-q{color:var(--gold)}
+  .xl-err{color:var(--red);font-weight:800;font-size:.85rem}
+  .xl-input-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .xl-lbl{font-weight:700;color:var(--muted)}
+  .xl-formula{flex:1;min-width:200px;padding:10px 12px;border-radius:10px;border:2px solid var(--line);
+    background:var(--card2);color:var(--text);font-size:1rem;font-family:"Consolas",monospace}
+  .xl-formula:focus{outline:none;border-color:var(--teal)}
+  .xl-formula:disabled{opacity:.7}
+  .xl-result{margin-top:8px;font-size:.92rem}
+  .xl-result.bad{color:var(--red)}
+
+  /* ---------- inbox (Postfach) ---------- */
+  .mail-row{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+  .mail-from{font-weight:800}
+  .mail-subj{font-weight:700;margin:2px 0}
+  .mail-prev{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+  .mail-btns{display:flex;gap:6px;flex-wrap:wrap}
+  .mail-act{border:2px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;
+    padding:8px 12px;font-weight:700;font-size:.9rem}
+  .mail-act:hover{border-color:var(--teal)}
+  .mail-act.sel{border-color:var(--blue);background:#12233f}
+  .mail-act.correct{border-color:var(--green);background:#0e2e1c}
+  .mail-act.wrong{border-color:var(--red);background:#2e1414}
+
+  /* ---------- formfill (Formular) ---------- */
+  .ffform{display:flex;flex-direction:column;gap:12px;margin:4px 0}
+  .ff-field{display:flex;flex-direction:column;gap:4px}
+  .ff-label{font-weight:700;font-size:.92rem}
+  .ff-input{padding:10px 12px;border-radius:10px;border:2px solid var(--line);
+    background:var(--card2);color:var(--text);font-size:1rem;font-family:inherit}
+  .ff-input:focus{outline:none;border-color:var(--teal)}
+  .ff-input.ff-good{border-color:var(--green)}
+  .ff-input.ff-bad{border-color:var(--red)}
+  .ff-err{color:var(--red);font-size:.85rem;min-height:0}
+  .ff-file{position:relative}
+  .ff-filebtn{border:2px solid var(--line);background:var(--card2);color:var(--text);border-radius:10px;
+    padding:9px 14px;font-weight:700}
+  .ff-filebtn:hover{border-color:var(--teal)}
+  .ff-file.ff-bad .ff-filebtn{border-color:var(--red)}
+  .ff-file.ff-good .ff-filebtn{border-color:var(--green)}
+  .ff-filemenu{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+  .ff-fileopt{text-align:left;border:1px solid var(--line);background:var(--card);color:var(--text);
+    border-radius:8px;padding:8px 12px;font-size:.92rem}
+  .ff-fileopt:hover{border-color:var(--teal);background:var(--card2)}
+  .ff-fileshown{font-size:.85rem;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div id="hud" class="hidden">
+  <div class="hud-in">
+    <span class="hud-name">👤 <span id="hName">–</span></span>
+    <span class="chip pts">⭐ <span id="hPts">0</span> Pkt</span>
+    <span class="chip rank">🏅 <span id="hRank">–</span></span>
+    <span class="hud-spacer"></span>
+    <button class="mini-btn" id="btnRead"  onclick="CA.toggleSet('read')"  title="Fragen vorlesen">🔊 Vorlesen</button>
+    <button class="mini-btn" id="btnSound" onclick="CA.toggleSet('sound')" title="Töne an/aus">🔉 Ton</button>
+    <button class="mini-btn" id="btnBig"   onclick="CA.toggleSet('big')"   title="Schrift größer">🔎 Schrift</button>
+    <button class="mini-btn" onclick="CA.go('map')">🗺️ Karte</button>
+    <button class="mini-btn" onclick="CA.go('report')">📊 Bericht</button>
+    <button class="mini-btn" onclick="CA.resetAll()">↺ Reset</button>
+    <div class="hud-bar"><span id="hBar"></span></div>
+  </div>
+</div>
+
+<div class="wrap" id="app"></div>
+
+<div id="toast"></div>
+<div id="celebrate"><div class="cbox"><div id="celeEmoji" style="font-size:2.6rem">🎉</div><div class="cbig" id="celeText"></div></div></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   INHALTE – 6 Welten (BPE 1–6) + Finale
+   ========================================================= */
+const WORLDS = [
+{
+  id:"w1", bpe:"BPE 1", emoji:"🔐", color:"#14b8a6",
+  title:"Der sichere Arbeitsplatz",
+  story:"Willkommen im PC-Raum! Bevor du loslegst, sorgst du dafür, dass dein Gerät sicher läuft, du deine Dateien wiederfindest und dich niemand hacken kann.",
+  acts:[
+    {id:"w1a1",type:"mc",q:"Du kommst in den PC-Raum. Was ist eine wichtige Regel?",
+     options:["Getränke direkt neben die Tastatur stellen","Erst Hände desinfizieren, dann sofort etwas essen","Keine Speisen oder offenen Getränke an den PC","Mit nassen Händen den Bildschirm putzen"],
+     answer:2,explain:"Essen und offene Getränke gehören nicht an den PC – Krümel und Flüssigkeit zerstören die Technik.",
+     why:["Ausgekippte Getränke können die Tastatur zerstören.","Essen am PC macht Krümel und Fettflecken – das gehört nicht dorthin.","","Nasse Hände und Technik vertragen sich nicht."],
+     hint:"Denke daran, was passiert, wenn Cola in die Tastatur läuft."},
+    {id:"w1a2",type:"buckets",q:"Sortiere: Ist es Hardware (zum Anfassen) oder Software (ein Programm)?",
+     buckets:["Hardware","Software"],
+     items:[{text:"Maus",bucket:"Hardware"},{text:"Word",bucket:"Software"},{text:"Monitor",bucket:"Hardware"},
+       {text:"Browser",bucket:"Software"},{text:"Tastatur",bucket:"Hardware"},{text:"Windows",bucket:"Software"},
+       {text:"Drucker",bucket:"Hardware"}],
+     explain:"Hardware kann man anfassen (Maus, Monitor …). Software sind Programme (Word, Windows …).",
+     hint:"Kann ich es in die Hand nehmen? → Hardware."},
+    {id:"w1a3",type:"order",q:"Bring die Schritte in die richtige Reihenfolge: So startest du deinen PC und meldest dich an.",
+     items:["Den PC am Power-Knopf einschalten","Warten, bis Windows startet","Deinen Benutzernamen auswählen","Dein Passwort eingeben","Mit Enter bestätigen"],
+     explain:"Erst einschalten, hochfahren lassen, dann anmelden mit Name + Passwort.",
+     hint:"Ganz oben steht das, was du als Allererstes machst."},
+    {id:"w1a4",type:"password",q:"Baue ein sicheres Passwort. Erfülle alle Regeln, um die Punkte zu bekommen!",
+     explain:"Ein sicheres Passwort ist lang und mischt Groß-, Kleinbuchstaben, Zahlen und Sonderzeichen.",
+     hint:"Tipp: Denk dir einen Satz aus und nimm die Anfangsbuchstaben – z. B. „Ich trinke jeden Morgen 2 Tassen Tee!“ → ItjM2TT!"},
+    {id:"w1a5",type:"match",q:"Verbinde die Dateiendung mit dem passenden Datei-Typ.",
+     pairs:[{l:".docx",r:"Word-Dokument"},{l:".xlsx",r:"Excel-Tabelle"},{l:".pptx",r:"PowerPoint"},
+       {l:".jpg",r:"Bild / Foto"},{l:".pdf",r:"PDF-Dokument"},{l:".mp3",r:"Musik / Audio"}],
+     explain:"An der Dateiendung erkennst du, mit welchem Programm eine Datei geöffnet wird.",
+     hint:".docx gehört zu Word, .xlsx zu Excel – die Anfänge helfen dir."},
+    {id:"w1a6",type:"mc",q:"Was schützt deinen Computer am besten vor Viren (Schadsoftware)?",
+     options:["Den PC nie ausschalten","Ein Virenschutz-Programm + regelmäßige Updates","Möglichst viele Programme aus unbekannten Quellen installieren","Jeden Link in E-Mails anklicken"],
+     answer:1,explain:"Virenschutz UND aktuelle Updates schließen Sicherheitslücken. Unbekannte Links/Programme sind gefährlich.",
+     why:["Nur ständig anlassen schützt nicht vor Viren.","","Programme aus unbekannten Quellen sind gefährlich – da holst du dir eher Viren.","Unbekannte Links anklicken ist genau das Risiko, das du vermeiden willst."],
+     hint:"Zwei Dinge gehören zusammen: schützen und aktuell halten."},
+    {id:"w1a7",type:"short",q:"Erkläre in einem Satz: Warum solltest du deine Dateien in Ordnern strukturieren (z. B. einen Ordner pro Fach)?",
+     keywords:["wiederfind","schnell","ordnung","übersicht","sortier","struktur","überblick"],
+     sample:"Damit ich meine Dateien schnell und einfach wiederfinde und den Überblick behalte.",
+     hint:"Denke daran, wie du eine bestimmte Datei nächste Woche schnell wiederfindest."},
+    {id:"w1a8",type:"mc",q:"Du gehst kurz vom Platz, bist aber noch angemeldet. Wie schützt du deinen PC am schnellsten?",
+     options:["Den Monitor ausschalten","Bildschirm sperren mit Windows-Taste + L","Nichts tun, ist ja nur kurz","Den Stecker ziehen"],
+     answer:1,explain:"Mit Windows + L sperrst du den Bildschirm sofort. Niemand kann an deine Dateien, du bleibst angemeldet.",
+     hint:"Es gibt eine Tastenkombination mit der Windows-Taste und dem Buchstaben L (wie „Lock“)."},
+    {id:"w1boss",type:"mc",boss:true,q:"⚡ RISIKO-FRAGE (20 Punkte): Du findest einen fremden USB-Stick auf dem Boden. Was tust du?",
+     options:["Sofort in meinen PC stecken, um zu sehen, wem er gehört","Nicht einstecken und der Lehrkraft geben","Mit nach Hause nehmen","Alle Dateien darauf löschen"],
+     answer:1,explain:"Fremde USB-Sticks können Schadsoftware enthalten. Nicht einstecken – abgeben!",
+     hint:"Ein fremder Stick kann eine Falle sein."}
+  ]
+},
+{
+  id:"w2", bpe:"BPE 2", emoji:"🔎", color:"#3b82f6",
+  title:"Detektiv im Internet",
+  story:"Im Netz gibt es Gold und Müll. Als Recherche-Detektiv findest du gute Infos – und entlarvst Fake-Seiten.",
+  acts:[
+    {id:"w2a1",type:"order",q:"Reihenfolge: So recherchierst du eine Information richtig.",
+     items:["Browser öffnen","Gute Suchbegriffe in die Suchmaschine eingeben","Mehrere Ergebnisse vergleichen","Die Quelle auf Glaubwürdigkeit prüfen","Wichtige Seite als Lesezeichen speichern"],
+     explain:"Nicht das erste Ergebnis blind nehmen – vergleichen und die Quelle prüfen ist entscheidend.",
+     hint:"Zuerst brauchst du überhaupt ein Programm, um ins Internet zu kommen."},
+    {id:"w2a2",type:"mc",q:"Du suchst, wie viel ein Führerschein in Baden-Württemberg kostet. Welcher Suchbegriff ist am besten?",
+     options:["auto","Führerschein Kosten Baden-Württemberg","ich möchte gerne wissen wie teuer so ein führerschein ungefähr ist","teuer"],
+     answer:1,explain:"Kurze, genaue Schlüsselwörter liefern die besten Treffer – nicht ganze Sätze, nicht zu allgemein.",
+     why:["„auto“ ist viel zu allgemein – das passt zu fast allem.","","Ganze Sätze braucht die Suchmaschine nicht – nimm nur die wichtigsten Wörter.","„teuer“ allein sagt nicht, worum es geht."],
+     hint:"Nimm nur die wichtigsten Wörter, keine ganzen Sätze."},
+    {id:"w2a3",type:"fakespot",q:"Diese Webseite ist verdächtig. Klicke ALLE Warnzeichen an, die zeigen, dass man ihr nicht vertrauen sollte.",
+     url:"http://super-gewinn-heute-xy123.info",
+     els:[
+       {text:"🎉 GLÜCKWUNSCH!!! Du hast ein iPhone GEWONNEN!!!",warn:true},
+       {text:"Klicke JETZT hier und gib deine Bankdaten ein, sonst verfällt dein Gewinn in 5 Minuten!",warn:true},
+       {text:"Adresse: http://super-gewinn-heute-xy123.info (unseriöser Name, nur „http“ ohne Schloss 🔒)",warn:true},
+       {text:"Kein Impressum und kein Anbieter angegeben",warn:true},
+       {text:"Überall blinkende Werbebanner",warn:true},
+       {text:"Wetterbericht für heute: 22 Grad",warn:false}
+     ],
+     explain:"Warnzeichen: reißerische Versprechen, Druck („nur 5 Minuten“), Aufforderung zu Bankdaten, unseriöser Adress-Name, fehlendes Impressum, viel Werbung. (Die Endung .info allein ist nicht das Problem – es kommt auf den ganzen Namen an.)",
+     hint:"Achte auf: Zeitdruck, Gewinnversprechen, Bankdaten, fehlendes Impressum."},
+    {id:"w2a4",type:"tfset",q:"Blitzrunde – Glaubwürdigkeit: Richtig oder Falsch?",
+     statements:[
+       {st:"Ein Impressum und ein Datum machen eine Seite vertrauenswürdiger.",correct:true},
+       {st:"Wenn etwas oft im Internet steht, ist es automatisch wahr.",correct:false},
+       {st:"Es ist sinnvoll, eine Information auf mehreren Seiten zu vergleichen.",correct:true},
+       {st:"Werbung und seriöse Information kann man immer sofort unterscheiden.",correct:false}
+     ],
+     explain:"Vergleichen und auf Impressum/Datum achten hilft. „Oft = wahr“ stimmt nicht.",
+     hint:"Überlege bei jeder Aussage: Kann man das wirklich immer so sagen?"},
+    {id:"w2a5",type:"match",q:"Verbinde das Browser-Symbol mit seiner Funktion.",
+     pairs:[{l:"⭐ Stern",r:"Lesezeichen speichern"},{l:"← Pfeil",r:"Eine Seite zurück"},
+       {l:"⟳ Kreis-Pfeil",r:"Seite neu laden"},{l:"🏠 Haus",r:"Zur Startseite"}],
+     explain:"Diese Symbole findest du in jedem Browser oben in der Leiste.",
+     hint:"Der Stern hat mit Merken/Favoriten zu tun."},
+    {id:"w2a6",type:"cloze",q:"Fülle die Lücken zum Thema Künstliche Intelligenz (KI) als Quelle.",
+     template:"Eine KI wie ein Chatbot kann {0}. Deshalb solltest du wichtige Antworten immer {1}. KI ist ein {2}, aber keine sichere Quelle.",
+     blanks:[
+       {options:["sich auch irren","niemals Fehler machen"],answer:0},
+       {options:["ungeprüft glauben","mit anderen Quellen prüfen"],answer:1},
+       {options:["Werkzeug","Beweis"],answer:0}
+     ],
+     explain:"KI kann Fehler machen (‚halluzinieren‘). Sie ist ein hilfreiches Werkzeug, aber Antworten musst du prüfen.",
+     hint:"KI ist praktisch, aber nicht immer korrekt."},
+    {id:"w2boss",type:"short",boss:true,q:"⚡ RISIKO (20 Punkte): Nenne zwei Merkmale, an denen du eine glaubwürdige Internetseite erkennst.",
+     keywords:["impressum","quelle","datum","autor","aktuell","seriös","url","vergleich","experte","sachlich"],
+     minKw:2,
+     sample:"Es gibt ein Impressum/einen Autor und ein aktuelles Datum; die Infos stimmen mit anderen Quellen überein.",
+     hint:"Denke an: Impressum, Datum/Aktualität, bekannter Autor, wenig aufdringliche Werbung."}
+  ]
+},
+{
+  id:"w3", bpe:"BPE 3", emoji:"💬", color:"#8b5cf6",
+  title:"Fair & sicher kommunizieren",
+  story:"E-Mails, Chats, soziale Medien – hier lernst du, respektvoll zu schreiben, deine Daten zu schützen und Betrug zu erkennen.",
+  acts:[
+    {id:"w3a1",type:"sim",q:"Entscheidungs-Simulation: Du bekommst diese E-Mail. Wie reagierst du?",
+     scene:"📧 Von: sparkasse-sicherheit@mail-xy.ru — „Ihr Konto wird GESPERRT! Klicken Sie sofort auf diesen Link und geben Sie Ihre PIN und Ihr Passwort ein, sonst verlieren Sie Ihr Geld!“",
+     choices:[
+       {text:"Sofort auf den Link klicken und meine Daten eingeben",points:0,feedback:"❌ Das ist Phishing! Banken fragen NIE per E-Mail nach PIN/Passwort. Du hättest deine Daten an Betrüger gegeben."},
+       {text:"Nicht klicken, Absender-Adresse prüfen, E-Mail löschen bzw. der Bank melden",points:15,feedback:"✅ Genau richtig! Die komische Adresse (.ru), der Zeitdruck und die Frage nach Passwort sind typische Betrugs-Zeichen."},
+       {text:"Den Link an Freunde weiterleiten",points:0,feedback:"❌ So verbreitest du den Betrug weiter. Nicht weiterleiten!"}
+     ],
+     explain:"Phishing erkennst du an: Zeitdruck, Drohung, komische Absender-Adresse, Frage nach Passwort/PIN. Niemals Daten eingeben.",
+     hint:"Würde deine echte Bank dich jemals per Mail nach dem Passwort fragen?"},
+    {id:"w3a2",type:"mc",q:"Was gehört zur Netiquette (gute Umgangsformen im Netz)?",
+     options:["In GROSSBUCHSTABEN schreiben, das heißt Schreien","Andere beleidigen, wenn man anderer Meinung ist","Höflich und respektvoll schreiben, wie im echten Gespräch","Private Fotos anderer ohne Erlaubnis teilen"],
+     answer:2,explain:"Netiquette = respektvoll und höflich kommunizieren. Großschreiben = Schreien, Beleidigungen und fremde Fotos sind tabu.",
+     hint:"Behandle andere so, wie du selbst behandelt werden möchtest."},
+    {id:"w3a3",type:"buckets",q:"Welche Daten solltest du im Internet NICHT einfach öffentlich teilen – und welche sind meist unbedenklich?",
+     buckets:["Lieber privat halten","Meist unbedenklich"],
+     items:[{text:"Passwort",bucket:"Lieber privat halten"},{text:"Wohnadresse",bucket:"Lieber privat halten"},
+       {text:"Lieblingsfarbe",bucket:"Meist unbedenklich"},{text:"Handynummer",bucket:"Lieber privat halten"},
+       {text:"Dein Hobby",bucket:"Meist unbedenklich"},{text:"Kontonummer",bucket:"Lieber privat halten"}],
+     explain:"Passwörter, Adresse, Handynummer, Kontodaten schützen! Hobby/Lieblingsfarbe sind harmlos.",
+     hint:"Alles, womit jemand dich finden oder dir schaden kann, bleibt privat."},
+    {id:"w3a4",type:"match",q:"Verbinde die Teile einer E-Mail mit ihrer Bedeutung.",
+     pairs:[{l:"An",r:"Empfänger der E-Mail"},{l:"Betreff",r:"Kurzes Thema der Mail"},
+       {l:"Anhang 📎",r:"Angehängte Datei (z. B. PDF)"},{l:"CC",r:"Kopie an weitere Personen"}],
+     explain:"Betreff = Thema, An = Empfänger, CC = Kopie, Anhang = angehängte Datei.",
+     hint:"Der Betreff steht in der Betreffzeile – er sagt, worum es geht."},
+    {id:"w3a5",type:"cloze",q:"Adressatengerecht schreiben: Wähle die passende Anrede.",
+     template:"An deinen Chef schreibst du: „{0}“. An deinen besten Freund schreibst du: „{1}“.",
+     blanks:[
+       {options:["Sehr geehrter Herr Müller, …","Hey Alter, was geht?"],answer:0},
+       {options:["Sehr geehrter Herr Müller, …","Hey, na wie läuft's?"],answer:1}
+     ],
+     explain:"Formell (Sehr geehrte/r …) für offizielle Kontakte, locker für Freunde. Adressatengerecht = passend zur Person.",
+     hint:"Beim Chef bleibst du höflich und förmlich."},
+    {id:"w3s1",type:"sim",q:"Simulation: Im Klassen-Chat wird jemand gemobbt. Was tust du?",
+     scene:"💬 Im Gruppenchat schreiben mehrere über Lisa: „Die ist voll peinlich 😂“ und schicken ein gemeines Foto von ihr. Jemand schreibt: „Los, alle mitlachen!“",
+     choices:[
+       {text:"Mitlachen und auch etwas Gemeines schreiben",points:0,feedback:"❌ So machst du beim Mobbing mit und verletzt Lisa. Das kann sogar strafbar sein."},
+       {text:"Nicht mitmachen, Lisa unterstützen und das Mobbing einer erwachsenen Person / Lehrkraft melden",points:10,feedback:"✅ Genau richtig! Nicht mitmachen, Haltung zeigen und Hilfe holen. Screenshots als Beweis können helfen."},
+       {text:"Einfach nichts tun und weiterscrollen",points:0,feedback:"❌ Wegschauen hilft der betroffenen Person nicht. Melden ist wichtig."}
+     ],
+     explain:"Bei Cybermobbing gilt: nicht mitmachen, die betroffene Person unterstützen, Beweise sichern und Hilfe holen (Lehrkraft, Eltern, Vertrauensperson).",
+     hint:"Stell dir vor, du wärst Lisa – was würdest du dir von den anderen wünschen?"},
+    {id:"w3a6",type:"mc",q:"Du erstellst dir ein neues Benutzerkonto. Welcher Nutzername ist am besten?",
+     options:["Dein volles Geburtsdatum + Adresse","Ein neutraler Name ohne private Daten, z. B. t.becker21","passwort123","Deine komplette Handynummer"],
+     answer:1,explain:"Der Nutzername sollte keine sensiblen privaten Daten verraten. Ein neutraler Name ist sicher.",
+     hint:"Verrate im Namen nicht, wo du wohnst oder wie man dich erreicht."},
+    {id:"w3inbox",type:"inbox",q:"Räume dein Postfach auf! Entscheide bei jeder E-Mail: Behalten, Melden (Betrug) oder Löschen (Spam).",
+     mails:[
+       {from:"ausbildung@stadtwerke-xy.de",subj:"Einladung zum Vorstellungsgespräch",prev:"Wir laden Sie am Montag um 9 Uhr ein …",action:"behalten"},
+       {from:"sicherheit@sparkasse-xy.ru",subj:"Ihr Konto wird GESPERRT!",prev:"Geben Sie sofort PIN und Passwort ein …",action:"melden"},
+       {from:"gewinn@super-aktion.info",subj:"Sie haben ein iPhone gewonnen!!!",prev:"Klicken Sie hier für Ihren Preis …",action:"löschen"},
+       {from:"newsletter@moebel-billig.de",subj:"-50% nur heute",prev:"Riesen Rabatt auf alles …",action:"löschen"},
+       {from:"klasse@schule-xy.de",subj:"Stundenplan neu",prev:"Hier der neue Plan für nächste Woche …",action:"behalten"}
+     ],
+     explain:"Echte Mails vom Betrieb/der Schule behalten. Betrug (fremde Bank, .ru, fragt nach Passwort) MELDEN. Werbung/Spam löschen.",
+     hint:"Fragt eine Mail nach Passwort/PIN oder droht mit Sperre? → Melden. Werbung? → Löschen."},
+    {id:"w3boss",type:"tfset",boss:true,q:"⚡ RISIKO (je 5 Punkte): Datenschutz & Kommunikation – Richtig oder Falsch?",
+     statements:[
+       {st:"Für offizielle Dinge (Bewerbung, Behörde) ist eine eigene E-Mail-Adresse wichtig.",correct:true},
+       {st:"Cybermobbing ist harmlos, weil es ja nur online passiert.",correct:false},
+       {st:"Man sollte dasselbe Passwort für alle Konten benutzen.",correct:false},
+       {st:"Bei einer geschäftlichen Mail schreibt man einen klaren Betreff.",correct:true}
+     ],
+     explain:"Cybermobbing ist ernst und verletzend. Passwörter nie mehrfach nutzen. Eigene Mail-Adresse + klarer Betreff sind wichtig.",
+     hint:"Denke daran, was du über Datenschutz und fairen Umgang gelernt hast."}
+  ]
+},
+{
+  id:"w4", bpe:"BPE 4", emoji:"📝", color:"#f59e0b",
+  title:"Textprofi mit Word",
+  story:"Bewerbung, Brief, Aushang – mit Word gestaltest du Texte professionell. Zeig, dass du die Werkzeuge beherrschst!",
+  acts:[
+    {id:"w4a1",type:"match",q:"Verbinde das Word-Symbol mit seiner Funktion.",
+     pairs:[{l:"F (fett)",r:"Text dick / fett machen"},{l:"K (kursiv)",r:"Text schräg stellen"},
+       {l:"U (unterstrichen)",r:"Text unterstreichen"},{l:"Aufzählung •",r:"Eine Liste mit Punkten"}],
+     explain:"F = fett, K = kursiv, U = unterstrichen. Das sind die Grund-Formatierungen.",
+     hint:"F wie … fett."},
+    {id:"w4a2",type:"memory",q:"Memory: Finde die Paare aus Tastenkombination und Wirkung.",
+     pairs:[{a:"Strg + C",b:"Kopieren"},{a:"Strg + V",b:"Einfügen"},{a:"Strg + Z",b:"Rückgängig"},{a:"Strg + S",b:"Speichern"}],
+     explain:"Diese Tastenkürzel sparen viel Zeit: Kopieren, Einfügen, Rückgängig, Speichern.",
+     hint:"C wie Copy (kopieren), V liegt daneben und fügt ein."},
+    {id:"w4a3",type:"mc",q:"Du hast einen Text geschrieben und willst ihn zum ersten Mal sichern. Was klickst du?",
+     options:["Datei → Drucken","Datei → Speichern unter … (Name + Ordner wählen)","Bearbeiten → Löschen","Ansicht → Vergrößern"],
+     answer:1,explain:"Beim ersten Mal „Speichern unter“, damit du Dateiname und Speicherort festlegst.",
+     hint:"Beim ersten Speichern musst du festlegen, WIE die Datei heißt und WO sie liegt."},
+    {id:"w4a4",type:"order",q:"Reihenfolge: So fügst du ein Bild in dein Word-Dokument ein.",
+     items:["Cursor an die Stelle setzen, wo das Bild hin soll","Reiter „Einfügen“ anklicken","Auf „Bilder“ klicken","Das gewünschte Bild auswählen","Auf „Einfügen“ klicken"],
+     explain:"Über den Reiter „Einfügen“ → „Bilder“ holst du ein Foto in dein Dokument.",
+     hint:"Zuerst legst du fest, an welcher Stelle das Bild landen soll."},
+    {id:"w4a5",type:"tfset",q:"Blitzrunde Word – Richtig oder Falsch?",
+     statements:[
+       {st:"Mit Überschriften-Formaten wird ein langer Text übersichtlicher.",correct:true},
+       {st:"Die Rechtschreibprüfung unterstreicht mögliche Fehler (z. B. rot).",correct:true},
+       {st:"Wenn ich Word schließe ohne zu speichern, sind meine Änderungen sicher gespeichert.",correct:false}
+     ],
+     explain:"Überschriften und Rechtschreibprüfung helfen. Ohne Speichern gehen Änderungen verloren!",
+     hint:"Was passiert, wenn du NICHT speicherst?"},
+    {id:"w4s1",type:"sim",q:"Simulation: Du hast deine Bewerbung in Word fertig. Wie schickst du sie an den Betrieb?",
+     scene:"📧 Der Betrieb will deine Bewerbung per E-Mail. Du hast sie als Word-Datei (.docx) geschrieben. Wie verschickst du sie am besten?",
+     choices:[
+       {text:"Als PDF speichern und das PDF anhängen",points:10,feedback:"✅ Perfekt! Ein PDF sieht bei allen gleich aus und lässt sich nicht aus Versehen verändern – ideal für Bewerbungen."},
+       {text:"Die .docx-Datei anhängen – egal wie",points:5,feedback:"➖ Geht auch, aber die Formatierung kann beim Betrieb verrutschen. Ein PDF ist sicherer."},
+       {text:"Den Text einfach in die E-Mail kopieren",points:0,feedback:"❌ Dann geht das schöne Layout verloren und es wirkt unprofessionell."}
+     ],
+     explain:"Bewerbungen schickt man am besten als PDF: Das Aussehen bleibt überall gleich und die Datei kann nicht versehentlich verändert werden. In Word: „Datei → Speichern unter → PDF“ oder „Exportieren → PDF“.",
+     hint:"Es gibt ein Datei-Format, das überall gleich aussieht und nicht verrutscht."},
+    {id:"w4form",type:"formfill",q:"Du bewirbst dich online. Fülle das Formular richtig aus – achte auf die Pflichtfelder und das richtige Format.",
+     fields:[
+       {key:"name",label:"Vor- und Nachname",type:"text",required:true},
+       {key:"email",label:"E-Mail",type:"text",required:true,rule:"email"},
+       {key:"plz",label:"Postleitzahl",type:"text",required:true,rule:"plz"},
+       {key:"geburt",label:"Geburtsdatum (TT.MM.JJJJ)",type:"text",required:true,rule:"date"},
+       {key:"stelle",label:"Gewünschte Stelle",type:"select",required:true,options:["– bitte wählen –","Lager","Verkauf","Büro"]},
+       {key:"datei",label:"Bewerbung als Datei",type:"file",required:true,files:[{name:"Bewerbung.pdf (0,3 MB)",ok:true},{name:"Bewerbung.docx (2 MB – zu groß)",ok:false}]}
+     ],
+     explain:"E-Mail braucht ein @ und einen Punkt. PLZ = 5 Ziffern. Datum = TT.MM.JJJJ. Als Bewerbung schickt man ein PDF, nicht zu groß.",
+     hint:"E-Mail-Beispiel: max.becker@web.de · PLZ: 70173 · Datum: 05.09.2007"},
+    {id:"w4a6",type:"short",q:"Erkläre kurz den Unterschied zwischen „Speichern“ und „Speichern unter“.",
+     keywords:["neuer name","neuen namen","anderer name","anderen namen","anderer ort","speicherort","kopie","überschreib","zweite datei","umbenenn"],
+     minKw:1,
+     sample:"„Speichern“ sichert die Änderungen in der bestehenden Datei. „Speichern unter“ legt eine neue Datei mit neuem Namen oder Ort an.",
+     hint:"Bei „Speichern unter“ kannst du Namen und Ort neu wählen."},
+    {id:"w4boss",type:"mc",boss:true,q:"⚡ RISIKO (20 Punkte): Welche Tastenkombination speichert dein Dokument blitzschnell?",
+     options:["Strg + P","Strg + S","Strg + X","Alt + F4"],
+     answer:1,explain:"Strg + S = Speichern. (Strg + P druckt, Strg + X schneidet aus, Alt + F4 schließt.)",
+     hint:"S wie … speichern."}
+  ]
+},
+{
+  id:"w5", bpe:"BPE 5", emoji:"📊", color:"#22c55e",
+  title:"Zahlenmeister mit Excel",
+  story:"Taschengeld, Lohnzettel, Einkaufsliste – Excel rechnet für dich. Werde zum Zahlenmeister!",
+  acts:[
+    {id:"w5a1",type:"mc",q:"In Excel steht eine Zahl in Spalte B, Zeile 3. Wie heißt diese Zelle?",
+     options:["3B","B3","BB","Zelle 33"],
+     answer:1,explain:"Zuerst der Spalten-Buchstabe, dann die Zeilen-Zahl: B3.",
+     hint:"Erst der Buchstabe (Spalte), dann die Zahl (Zeile)."},
+    {id:"w5a2",type:"mc",q:"In A1 steht 5, in A2 steht 10, in A3 steht 15. Welche Formel rechnet die Summe?",
+     options:["=A1+A2+A3","=SUMME(A1:A3)","Beide sind richtig","5+10+15 (ohne =)"],
+     answer:2,explain:"Beide funktionieren! =A1+A2+A3 und =SUMME(A1:A3) ergeben 30. Wichtig: Eine Formel beginnt mit „=“.",
+     hint:"Es gibt hier mehr als einen richtigen Weg …"},
+    {id:"w5a3",type:"cloze",q:"Vervollständige die Regeln für Excel-Formeln.",
+     template:"Jede Formel beginnt mit dem Zeichen {0}. Der Mittelwert wird mit {1} berechnet. Ein Sternchen {2} bedeutet „mal“ (multiplizieren).",
+     blanks:[
+       {options:["=","+"],answer:0},
+       {options:["=MITTELWERT()","=MITTE()"],answer:0},
+       {options:["*","x"],answer:0}
+     ],
+     explain:"= startet jede Formel. =MITTELWERT() bildet den Durchschnitt. * heißt multiplizieren.",
+     hint:"Auf dem Ziffernblock ist das Mal-Zeichen ein Stern."},
+    {id:"w5a4",type:"match",q:"Verbinde die Formel / Funktion mit ihrer Aufgabe.",
+     pairs:[{l:"=SUMME()",r:"Alles zusammenzählen"},{l:"=MITTELWERT()",r:"Durchschnitt berechnen"},
+       {l:"=MAX()",r:"Den größten Wert finden"},{l:"=MIN()",r:"Den kleinsten Wert finden"}],
+     explain:"SUMME addiert, MITTELWERT bildet den Durchschnitt, MAX/MIN finden größten/kleinsten Wert.",
+     hint:"MAX klingt wie „Maximum“ (das Größte)."},
+    {id:"w5a5",type:"order",q:"Reihenfolge: So erstellst du aus deinen Zahlen ein Diagramm.",
+     items:["Die Zahlen (Zellen) mit der Maus markieren","Reiter „Einfügen“ anklicken","Einen Diagramm-Typ auswählen (z. B. Säulen)","Das Diagramm erscheint – Titel anpassen"],
+     explain:"Erst Daten markieren, dann über „Einfügen“ einen Diagrammtyp wählen.",
+     hint:"Excel muss zuerst wissen, WELCHE Zahlen es darstellen soll."},
+    {id:"w5a6",type:"mc",q:"Du willst zeigen, wie sich dein Taschengeld über 6 Monate verändert. Welcher Diagramm-Typ passt gut?",
+     options:["Ein Linien- oder Säulendiagramm","Gar kein Diagramm","Nur eine einzige Zahl","Ein Foto vom Portemonnaie"],
+     answer:0,explain:"Für Entwicklungen über Zeit eignen sich Linien- oder Säulendiagramme.",
+     hint:"Du willst eine Entwicklung über mehrere Monate sehen."},
+    {id:"w5live",type:"livecell",q:"Rechne mit einer echten Formel! Schreibe unten eine Formel, sodass in der gelben Zelle B4 die Summe von B1 bis B3 steht.",
+     grid:{cols:["A","B"],rows:3,cells:{A1:"Monat",B1:"5",A2:"Woche",B2:"10",A3:"Heute",B3:"15"},targetCell:"B4",targetValue:30,targetLabelCell:"A4",targetLabel:"Summe"},
+     explain:"=SUMME(B1:B3) addiert die Zellen B1,B2,B3 = 30. Jede Formel beginnt mit =.",
+     hint:"Beginne mit = und nutze SUMME(B1:B3)."},
+    {id:"w5boss",type:"short",boss:true,q:"⚡ RISIKO (20 Punkte): In den Zellen B1 bis B4 stehen 4 Zahlen. Schreibe die Formel auf, die den Durchschnitt berechnet.",
+     checkId:"avgB1B4",
+     sample:"=MITTELWERT(B1:B4)",
+     hint:"Beginne mit =MITTELWERT( und gib den Bereich B1:B4 an."}
+  ]
+},
+{
+  id:"w6", bpe:"BPE 6", emoji:"🎤", color:"#ec4899",
+  title:"Bühne frei: Präsentieren",
+  story:"Ob Vorstellungsgespräch oder Schulprojekt – mit einer guten Präsentation überzeugst du. Zeig dein Können!",
+  acts:[
+    {id:"w6a1",type:"mc",q:"Was macht eine GUTE Präsentationsfolie aus?",
+     options:["Ganz viel Text in kleiner Schrift","Wenig Text, große Schrift, klare Bilder","Nur bunte Animationen, kein Inhalt","So viele Farben wie möglich"],
+     answer:1,explain:"Weniger ist mehr: kurze Stichworte, große lesbare Schrift, passende Bilder.",
+     why:["Viel Text in kleiner Schrift kann niemand lesen.","","Ohne Inhalt bringen Animationen nichts.","Zu viele Farben machen die Folie unruhig und unübersichtlich."],
+     hint:"Das Publikum soll die Folie in Sekunden erfassen können."},
+    {id:"w6a2",type:"buckets",q:"Sortiere: Merkmal einer guten oder einer schlechten Folie?",
+     buckets:["Gute Folie","Schlechte Folie"],
+     items:[{text:"Kurze Stichpunkte",bucket:"Gute Folie"},{text:"Ganze Textblöcke zum Vorlesen",bucket:"Schlechte Folie"},
+       {text:"Große, lesbare Schrift",bucket:"Gute Folie"},{text:"Winzige Schrift",bucket:"Schlechte Folie"},
+       {text:"Gute Farb-Kontraste",bucket:"Gute Folie"},{text:"Gelber Text auf weißem Grund",bucket:"Schlechte Folie"}],
+     explain:"Gute Folien: Stichpunkte, große Schrift, guter Kontrast. Schlecht: viel Text, winzige Schrift, schlechter Kontrast.",
+     hint:"Kann man es aus der letzten Reihe lesen? Dann ist es gut."},
+    {id:"w6a3",type:"order",q:"Reihenfolge: So erstellst du eine neue Folie mit Titel.",
+     items:["Reiter „Start“ → „Neue Folie“ anklicken","Ein Layout auswählen (z. B. Titel + Inhalt)","In das Titelfeld klicken","Die Überschrift eintippen"],
+     explain:"Neue Folie einfügen, Layout wählen, dann in die Felder klicken und schreiben.",
+     hint:"Zuerst brauchst du überhaupt eine neue, leere Folie."},
+    {id:"w6a4",type:"match",q:"Verbinde die PowerPoint-Begriffe mit ihrer Bedeutung.",
+     pairs:[{l:"Folie",r:"Eine einzelne Seite der Präsentation"},{l:"Layout",r:"Anordnung der Felder auf der Folie"},
+       {l:"Übergang",r:"Effekt beim Folienwechsel"},{l:"Taste F5",r:"Präsentation starten (Vollbild)"}],
+     explain:"Folie = Seite, Layout = Anordnung, Übergang = Wechsel-Effekt, F5 = Präsentation starten.",
+     hint:"Mit F5 geht’s los – Vollbild an."},
+    {id:"w6a5",type:"sim",q:"Simulation: Du präsentierst vor der Klasse. Was tust du?",
+     scene:"🎤 Du stehst vorne, deine Folien laufen. Wie hältst du deinen Vortrag am besten?",
+     choices:[
+       {text:"Den kompletten Text von der Folie Wort für Wort ablesen",points:0,feedback:"❌ Ablesen wirkt langweilig. Die Folie ist Stütze, du erzählst frei mit eigenen Worten."},
+       {text:"Frei sprechen, Blickkontakt halten, Folien als Stütze nutzen",points:15,feedback:"✅ Perfekt! Frei sprechen + Blickkontakt überzeugt das Publikum."},
+       {text:"Nur auf den Boden schauen und leise murmeln",points:0,feedback:"❌ Ohne Blickkontakt und zu leise erreichst du dein Publikum nicht."}
+     ],
+     explain:"Gut präsentieren = frei sprechen, Blickkontakt, laut und deutlich, Folien nur als Stütze.",
+     hint:"Die Folie ist deine Stütze – nicht dein Vorlese-Blatt."},
+    {id:"w6boss",type:"short",boss:true,q:"⚡ RISIKO (20 Punkte): Nenne zwei Regeln für gute Präsentationsfolien.",
+     keywords:["wenig text","kurz","stichpunkt","große schrift","gross schrift","lesbar","bild","kontrast","übersicht","nicht zu viel"],
+     minKw:2,
+     sample:"Wenig Text / nur Stichpunkte und eine große, gut lesbare Schrift mit klarem Kontrast.",
+     hint:"Denke an: Textmenge und Schriftgröße/Lesbarkeit."}
+  ]
+},
+{
+  id:"wF", bpe:"FINALE", emoji:"🏆", color:"#fbbf24",
+  title:"Der große Digital-Test",
+  story:"Alles zusammen! Gemischte Fragen aus dem ganzen Jahr. Schaffst du den Meister-Titel?",
+  final:true,
+  acts:[
+    {id:"wFa1",type:"mc",boss:true,q:"Welche Datei öffnet sich mit Excel?",
+     options:["bericht.docx","tabelle.xlsx","foto.jpg","vortrag.pptx"],answer:1,
+     explain:".xlsx = Excel-Tabelle.",hint:"Excel = Tabellen = .xlsx"},
+    {id:"wFa2",type:"tfset",boss:true,q:"Gemischte Blitzrunde – Richtig oder Falsch?",
+     statements:[
+       {st:"Ein sicheres Passwort ist kurz und leicht zu erraten.",correct:false},
+       {st:"Strg + S speichert eine Datei.",correct:true},
+       {st:"Bei Phishing-Mails soll man seine PIN eingeben.",correct:false},
+       {st:"=SUMME() zählt Zahlen zusammen.",correct:true}
+     ],
+     explain:"Sichere Passwörter sind lang, Strg+S speichert, PIN nie eingeben, SUMME addiert.",
+     hint:"Prüfe jede Aussage einzeln: Stimmt das mit dem überein, was du gelernt hast?"},
+    {id:"wFa3",type:"match",boss:true,q:"Ordne das Programm der Aufgabe zu.",
+     pairs:[{l:"Word",r:"Texte / Briefe schreiben"},{l:"Excel",r:"Rechnen & Tabellen"},
+       {l:"PowerPoint",r:"Präsentationen halten"},{l:"Browser",r:"Im Internet suchen"}],
+     explain:"Word=Text, Excel=Tabellen, PowerPoint=Präsentation, Browser=Internet.",
+     hint:"Womit rechnet man? → Excel."},
+    {id:"wFa4",type:"mc",boss:true,q:"Du bekommst eine E-Mail mit dringendem Zeitdruck, die nach deinem Passwort fragt. Was tust du?",
+     options:["Passwort eingeben","Nicht reagieren / löschen / melden","Antworten und nachfragen","Weiterleiten an alle"],
+     answer:1,explain:"Klassisches Phishing – niemals Passwort herausgeben, löschen bzw. melden.",
+     hint:"Seriöse Firmen fragen NIE nach deinem Passwort."},
+    {id:"wFa5",type:"cloze",boss:true,q:"Fülle die Lücken zum Recherchieren.",
+     template:"Bei der Suche nutze ich kurze {0}. Ich vertraue nicht dem {1} Ergebnis, sondern {2} mehrere Quellen.",
+     blanks:[
+       {options:["Schlüsselwörter","ganzen Sätze"],answer:0},
+       {options:["ersten","besten"],answer:0},
+       {options:["vergleiche","lösche"],answer:0}
+     ],
+     explain:"Kurze Schlüsselwörter, nicht blind dem ersten Treffer vertrauen, Quellen vergleichen.",
+     hint:"Das erste Ergebnis ist nicht automatisch das beste."}
+  ]
+}
+];
+
+/* Badges */
+const BADGES = [
+  {id:"start",ic:"🚀",nm:"Gestartet",cond:"Starte das Abenteuer mit deinem Namen."},
+  {id:"w1",ic:"🔐",nm:"Sicher am PC",cond:"Löse alle Aufgaben in Welt 1."},
+  {id:"w2",ic:"🔎",nm:"Recherche-Profi",cond:"Löse alle Aufgaben in Welt 2."},
+  {id:"w3",ic:"💬",nm:"Kommunikation",cond:"Löse alle Aufgaben in Welt 3."},
+  {id:"w4",ic:"📝",nm:"Word-Profi",cond:"Löse alle Aufgaben in Welt 4."},
+  {id:"w5",ic:"📊",nm:"Excel-Profi",cond:"Löse alle Aufgaben in Welt 5."},
+  {id:"w6",ic:"🎤",nm:"Präsentation",cond:"Löse alle Aufgaben in Welt 6."},
+  {id:"wF",ic:"🏆",nm:"Digital-Meister",cond:"Löse alle Aufgaben im Finale."},
+  {id:"nohint",ic:"🧠",nm:"Ohne Hilfe!",cond:"Löse mindestens 10 Aufgaben, ohne eine Hilfekarte zu nutzen."},
+  {id:"perfect",ic:"💎",nm:"Alles gelöst",cond:"Löse alle Aufgaben in allen 7 Welten."}
+];
+
+const RANKS = [
+  {min:0,nm:"Neuling"},{min:60,nm:"Lehrling"},{min:150,nm:"Kenner"},
+  {min:280,nm:"Profi"},{min:420,nm:"Experte"},{min:560,nm:"Digital-Meister"}
+];
+
+/* =========================================================
+   ENGINE
+   ========================================================= */
+const CA = {
+  KEY:"ca_av3_rueckblick_v1",
+  state:null,
+  storageOK:true,
+  _retry:{},          // transiente Merker für „Nochmal versuchen“
+  _rankIdx:0,         // zuletzt angezeigter Rang (für Aufstiegs-Feier)
+
+  boot(){
+    this.storageOK = this.testStorage();
+    this.load();
+    this.applySettings();
+    this._rankIdx=this.rankIdx();
+    if(this.state && this.state.name && this.state.started){
+      document.getElementById("hud").classList.remove("hidden");
+      this.updateSetBtns();
+      this.go("map");
+    }else{
+      this.renderStart();
+    }
+  },
+  testStorage(){
+    try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return true;}
+    catch(e){return false;}
+  },
+  fresh(){return {name:"",started:false,points:0,acts:{},badges:[],streak:0,
+    settings:{read:false,sound:true,big:false},startedAt:null};},
+  load(){
+    if(!this.storageOK){this.state=this.fresh();return;}
+    try{
+      const parsed = JSON.parse(localStorage.getItem(this.KEY));
+      // fehlende Felder aus fresh() ergänzen -> schützt vor kaputten/alten Ständen
+      this.state = Object.assign(this.fresh(), parsed || {});
+      if(!this.state.acts || typeof this.state.acts!=="object") this.state.acts={};
+      if(!Array.isArray(this.state.badges)) this.state.badges=[];
+      this.state.settings = Object.assign(this.fresh().settings, this.state.settings||{});
+    }
+    catch(e){this.state=this.fresh();}
+  },
+  save(){
+    if(!this.storageOK) return;
+    try{localStorage.setItem(this.KEY, JSON.stringify(this.state));}catch(e){}
+  },
+
+  rank(){let r=RANKS[0];for(const x of RANKS){if(this.state.points>=x.min)r=x;}return r.nm;},
+  rankIdx(){let idx=0;RANKS.forEach((x,i)=>{if(this.state.points>=x.min)idx=i;});return idx;},
+
+  /* Spezial-Prüfungen für Kurzantworten (statt reinem Stichwort-Suchen) */
+  CHECKS:{
+    // Durchschnitt von B1..B4: akzeptiert Bereich B1:B4 oder alle vier Zellen einzeln,
+    // auch AVERAGE; lehnt B1;B4 (nur zwei Zellen) korrekt ab.
+    avgB1B4(v){
+      const s=(v||"").toLowerCase().replace(/\s+/g,"");
+      const m=s.match(/^=?(mittelwert|average)\((.+)\)$/);
+      if(!m)return false;
+      const inside=m[2];
+      return /^b1:b4$/.test(inside) || /^b1;b2;b3;b4$/.test(inside);
+    }
+  },
+  maxPoints(){
+    let m=0;
+    WORLDS.forEach(w=>w.acts.forEach(a=>{m+=this.actMax(a);}));
+    return m;
+  },
+  actMax(a){
+    if(a.type==="tfset") return a.statements.length*5;
+    return a.boss?20:10;
+  },
+  updateHUD(){
+    document.getElementById("hName").textContent=this.state.name||"–";
+    document.getElementById("hPts").textContent=this.state.points;
+    document.getElementById("hRank").textContent=this.rank();
+    const pct=Math.min(100,Math.round(this.state.points/this.maxPoints()*100));
+    document.getElementById("hBar").style.width=pct+"%";
+  },
+
+  /* ---- navigation ---- */
+  go(where,arg){
+    window.scrollTo(0,0);
+    if(where==="map")this.renderMap();
+    else if(where==="world")this.renderWorld(arg);
+    else if(where==="report")this.renderReport();
+    else if(where==="leaderboard")this.renderLeaderboard();
+    this.updateHUD();
+  },
+
+  /* ---- start screen ---- */
+  renderStart(){
+    const app=document.getElementById("app");
+    const warn = this.storageOK
+      ? `<div class="save-state ok" id="saveState">💾 Speicherung aktiv – dein Fortschritt wird auf diesem PC gesichert.</div>`
+      : `<div class="save-state bad" id="saveState">⚠️ Achtung: Die Speicherung funktioniert hier NICHT. Bitte speichere diese Datei zuerst richtig ab (siehe Anleitung) und öffne sie dann erneut.</div>`;
+    app.innerHTML=`
+      <div class="hero">
+        <div class="big">🎮 Das große Digital-Abenteuer</div>
+        <p class="muted">Computeranwendungen · AV3 · Wiederholung des ganzen Jahres</p>
+      </div>
+      <div class="save-banner">
+        <b>⚠️ Wichtig – zuerst speichern!</b><br>
+        Diese Seite merkt sich deine Punkte nur, wenn die Datei <b>fest auf dem PC gespeichert</b> ist.
+        Öffne sie <b>nicht</b> direkt aus einer E-Mail oder Vorschau. Speichere sie zuerst in deinen Ordner
+        und öffne sie <b>immer von dort</b>. Sonst ist dein Fortschritt weg!
+      </div>
+      <div class="card">
+        <h3>Wie heißt du?</h3>
+        <p class="muted">Dein Name erscheint oben – so sieht die Lehrkraft am Bildschirm, wessen Punkte das sind.</p>
+        <input type="text" id="nameIn" placeholder="Vorname und erster Buchstabe vom Nachnamen, z. B. Max M." maxlength="30">
+        ${warn}
+        <button class="btn block" onclick="CA.start()">Los geht's! 🚀</button>
+      </div>
+      <div class="card">
+        <h3>So funktioniert's</h3>
+        <p>Du reist durch <b>7 Welten</b>. In jeder Welt löst du verschiedene Aufgaben und Spiele und sammelst
+        <b>Punkte ⭐</b> und <b>Abzeichen 🏅</b>. Steckst du fest? Nutze eine <b>Hilfekarte 💡</b> –
+        die kostet aber ein paar Punkte. Viel Erfolg!</p>
+        <p class="muted" style="font-size:.9rem">Gut zu wissen: Oben kannst du dir Aufgaben <b>🔊 vorlesen</b> lassen und die
+        <b>🔎 Schrift</b> größer stellen. War eine Antwort falsch? Klicke <b>🔁 Nochmal versuchen</b> und lerne dazu.</p>
+      </div>
+      <footer>Bildungsplan Computeranwendungen (AVdual/AV, BW) · BPE 1–6</footer>`;
+    const inp=document.getElementById("nameIn");
+    inp.value=this.state.name||"";
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")this.start();});
+  },
+  start(){
+    const v=document.getElementById("nameIn").value.trim();
+    if(!v){document.getElementById("nameIn").focus();this.toast("Bitte gib zuerst deinen Namen ein 🙂");return;}
+    this.state.name=v;this.state.started=true;
+    if(!this.state.startedAt)this.state.startedAt=new Date().toLocaleString("de-DE");
+    if(!this.state.badges.includes("start"))this.state.badges.push("start");
+    this.save();
+    document.getElementById("hud").classList.remove("hidden");
+    this.updateSetBtns();
+    this.go("map");
+  },
+
+  /* ---- settings / accessibility ---- */
+  toggleSet(k){
+    this.state.settings[k]=!this.state.settings[k];
+    this.save();this.applySettings();this.updateSetBtns();
+    if(k==="read"&&!this.state.settings.read)this.stopSpeak();
+    if(k==="read"&&this.state.settings.read)this.toast("🔊 Vorlesen an – tippe eine Aufgabe an.");
+  },
+  applySettings(){
+    const s=this.state.settings||{};
+    document.body.classList.toggle("big",!!s.big);
+  },
+  updateSetBtns(){
+    const s=this.state.settings||{};
+    const set=(id,on)=>{const b=document.getElementById(id);if(b)b.classList.toggle("on",!!on);};
+    set("btnRead",s.read);set("btnSound",s.sound);set("btnBig",s.big);
+  },
+
+  /* ---- Sprachausgabe (Web Speech API, offline im Browser) ---- */
+  speak(text){
+    try{
+      if(!("speechSynthesis" in window))return;
+      window.speechSynthesis.cancel();
+      // Emojis/Symbole vor dem Vorlesen entfernen
+      let clean=String(text);
+      try{clean=clean.replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/gu,"");}catch(e){}
+      const u=new SpeechSynthesisUtterance(clean.replace(/\s+/g," ").trim());
+      u.lang="de-DE";u.rate=.95;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  },
+  stopSpeak(){try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}},
+
+  /* ---- kurze Töne ohne Audiodatei (Web Audio) ---- */
+  beep(kind){
+    if(!this.state.settings||!this.state.settings.sound)return;
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+      this._ac=this._ac||new AC();const ac=this._ac;
+      const seq = kind==="good"?[[660,0],[880,.09]] : kind==="win"?[[523,0],[659,.1],[784,.2]] : [[300,0]];
+      seq.forEach(([f,t])=>{
+        const o=ac.createOscillator(),g=ac.createGain();
+        o.type=kind==="bad"?"sawtooth":"sine";o.frequency.value=f;
+        o.connect(g);g.connect(ac.destination);
+        const s=ac.currentTime+t;
+        g.gain.setValueAtTime(.0001,s);g.gain.exponentialRampToValueAtTime(.15,s+.02);
+        g.gain.exponentialRampToValueAtTime(.0001,s+.18);
+        o.start(s);o.stop(s+.2);
+      });
+    }catch(e){}
+  },
+
+  /* ---- Feier-Overlay + Konfetti ---- */
+  celebrate(emoji,text){
+    const box=document.getElementById("celebrate");
+    if(!box)return;
+    document.getElementById("celeEmoji").textContent=emoji;
+    document.getElementById("celeText").textContent=text;
+    box.classList.add("show");
+    if(!this.state.settings||this.state.settings.calm!==true)this.confetti();
+    clearTimeout(this._ct);this._ct=setTimeout(()=>box.classList.remove("show"),1900);
+  },
+  confetti(){
+    const cols=["#14b8a6","#3b82f6","#8b5cf6","#f59e0b","#22c55e","#ec4899","#fbbf24"];
+    for(let i=0;i<28;i++){
+      const c=document.createElement("div");c.className="confetti";
+      c.style.left=Math.random()*100+"vw";
+      c.style.background=cols[i%cols.length];
+      c.style.animationDuration=(1.1+Math.random()*1.1)+"s";
+      c.style.animationDelay=(Math.random()*.25)+"s";
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(),2600);
+    }
+  },
+
+  /* ---- world map ---- */
+  worldDone(w){return w.acts.every(a=>this.state.acts[a.id]&&this.state.acts[a.id].done);},
+  worldProgress(w){
+    const t=w.acts.length;let d=0;
+    w.acts.forEach(a=>{if(this.state.acts[a.id]&&this.state.acts[a.id].done)d++;});
+    return {d,t,pct:t?Math.round(d/t*100):0};
+  },
+  worldStars(w){
+    let got=0,max=0;
+    w.acts.forEach(a=>{max+=this.actMax(a);const s=this.state.acts[a.id];if(s&&s.done)got+=s.points;});
+    if(max===0)return 0;const r=got/max;
+    return r>=0.9?3:r>=0.6?2:r>0?1:0;
+  },
+  unlocked(i){
+    if(i===0)return true;
+    if(WORLDS[i].final){return WORLDS.slice(0,6).every(w=>this.worldProgress(w).d>0);}
+    return true; // Welten frei zugänglich (Finale braucht etwas Fortschritt)
+  },
+  renderMap(){
+    const app=document.getElementById("app");
+    let cards="";
+    WORLDS.forEach((w,i)=>{
+      const p=this.worldProgress(w);
+      const stars=this.worldStars(w);
+      const starStr="★★★☆☆☆".slice(0,3); // placeholder replaced below
+      const st="★".repeat(stars)+"☆".repeat(3-stars);
+      const locked=!this.unlocked(i);
+      const badge=this.worldDone(w)?`<div class="wc-badge">${w.final?"🏆":"✅"}</div>`:"";
+      cards+=`
+        <div class="world-card" ${locked?"":`onclick="CA.go('world','${w.id}')"`}
+             style="border-top:4px solid ${w.color}">
+          ${badge}
+          <div class="wc-emoji">${w.emoji}</div>
+          <div class="wc-bpe">${w.bpe}</div>
+          <h3>${w.title}</h3>
+          <div class="stars" style="color:var(--gold)">${st}</div>
+          <div class="muted" style="font-size:.82rem">${p.d}/${p.t} Aufgaben</div>
+          <div class="wc-prog"><span style="width:${p.pct}%;background:${w.color}"></span></div>
+          ${locked?`<div class="wc-lock">🔒<span style="font-size:.7rem">Löse zuerst ein paar Welten</span></div>`:""}
+        </div>`;
+    });
+    const total=this.maxPoints();
+    app.innerHTML=`
+      <div class="hero" style="padding-bottom:0">
+        <h1>🗺️ Weltkarte</h1>
+        <p class="muted">Wähle eine Welt. Sammle ⭐ und schalte alle Abzeichen frei.</p>
+        <p><span class="chip pts">⭐ ${this.state.points} / ${total} Punkte</span>
+           <span class="chip rank">🏅 ${this.rank()}</span></p>
+      </div>
+      <div class="worlds">${cards}</div>
+      <div class="card center">
+        <button class="btn ghost" onclick="CA.go('report')">📊 Meinen Bericht ansehen</button>
+      </div>
+      <footer>Tipp für die Lehrkraft: Der Bericht (📊) zeigt Name, Punkte und Welten – gut für einen Screenshot.</footer>`;
+  },
+
+  /* ---- world page ---- */
+  renderWorld(id){
+    const w=WORLDS.find(x=>x.id===id);
+    const app=document.getElementById("app");
+    app.innerHTML=`
+      <div class="hero" style="padding-bottom:6px">
+        <div style="font-size:2.6rem">${w.emoji}</div>
+        <span class="pill" style="border-color:${w.color};color:${w.color}">${w.bpe}</span>
+        <h1>${w.title}</h1>
+      </div>
+      <div class="card" style="border-left:5px solid ${w.color}">
+        <p style="margin:0">${w.story}</p>
+      </div>
+      <div id="acts"></div>
+      <div class="card center">
+        <p class="muted" id="worldSummary"></p>
+        <button class="btn" onclick="CA.go('map')">✔️ Zurück zur Weltkarte</button>
+      </div>`;
+    const holder=document.getElementById("acts");
+    w.acts.forEach((a,idx)=>holder.appendChild(this.buildActivity(a,idx+1,w.color)));
+    this.updateWorldSummary(w);
+    if(this.state.settings&&this.state.settings.read)this.speak(w.story);
+  },
+  updateWorldSummary(w){
+    const p=this.worldProgress(w);
+    const el=document.getElementById("worldSummary");
+    if(el)el.textContent=`Geschafft: ${p.d} von ${p.t} Aufgaben in dieser Welt.`;
+  },
+
+  /* ---- award ---- */
+  complete(a,pts,correct){
+    const prev=this.state.acts[a.id];
+    const retrying=!!this._retry[a.id];
+    if(prev&&prev.done&&!retrying)return;
+    if(retrying){                       // alte Punkte zurücknehmen, dann neu bewerten
+      this.state.points-=(prev?prev.points:0);
+      delete this._retry[a.id];
+    }
+    this.state.acts[a.id]={done:true,points:pts,correct:correct,
+      hint:prev?prev.hint:false, retried:!!(retrying||(prev&&prev.retried)),
+      answerText:prev?prev.answerText:undefined};
+    this.state.points+=pts;
+    // Streak/Kombo: nur bei echtem Erstversuch (kein Retry) zählen
+    if(!retrying){
+      if(correct===true){
+        this.state.streak=(this.state.streak||0)+1;
+        // Bonus ab 3er-Serie (3,5,7 …)
+        if(this.state.streak>=3 && this.state.streak%2===1){
+          this.state.points+=2;
+          this.toast("🔥 "+this.state.streak+" richtig in Folge!");
+        }
+      }else if(correct===false){
+        this.state.streak=0;
+      }
+    }
+    this.save();
+    this.updateHUD();
+    const cardEl=document.querySelector('.act[data-aid="'+(window.CSS&&CSS.escape?CSS.escape(a.id):a.id)+'"]');
+    if(cardEl){
+      cardEl.classList.add("done");
+      // „Nochmal versuchen“ direkt nach dem Antworten anbieten (falls nicht perfekt)
+      if(!correct && !this.state.acts[a.id].retried && a.type!=="memory" && !cardEl.querySelector(".retrybtn")){
+        const foot=cardEl.querySelector(".a-foot");
+        if(foot){const rt=document.createElement("button");rt.className="retrybtn";rt.type="button";
+          rt.textContent="🔁 Nochmal versuchen";rt.onclick=()=>this.startRetry(a);foot.appendChild(rt);}
+      }
+    }
+    this.checkBadges();
+    this.checkRankUp();
+    const w=WORLDS.find(x=>x.acts.includes(a));
+    if(w)this.updateWorldSummary(w);
+    if(correct)this.beep("good"); else if(pts<=0)this.beep("bad");
+    if(pts>0)this.toast(`✅ +${pts} Punkte!`);
+    else this.toast(`Weiter geht's – nicht aufgeben! 💪`);
+  },
+  checkRankUp(){
+    const idx=this.rankIdx();
+    if(idx>this._rankIdx){this._rankIdx=idx;this.beep("win");
+      this.celebrate("🏅","Neuer Rang: "+RANKS[idx].nm+"!");}
+    else this._rankIdx=idx;
+  },
+  /* eine erledigte, noch nicht perfekte Aufgabe zum Üben neu öffnen (einmalig) */
+  startRetry(a){
+    this.stopSpeak();
+    this._retry[a.id]=true;
+    const w=WORLDS.find(x=>x.acts.includes(a));
+    const idx=w?w.acts.indexOf(a):0;
+    const sel='.act[data-aid="'+(window.CSS&&CSS.escape?CSS.escape(a.id):a.id)+'"]';
+    const old=document.querySelector(sel);
+    if(old){
+      const fresh=this.buildActivity(a,idx+1,w?w.color:"#14b8a6");
+      old.replaceWith(fresh);
+      fresh.scrollIntoView({behavior:"smooth",block:"center"});
+      if(this.state.settings&&this.state.settings.read)this.speak(this.readText(a));
+    }
+    this.toast("🔁 Versuch's nochmal – du schaffst das!");
+  },
+  spendHint(a,cost){
+    const s=this.state.acts[a.id]||{done:false,points:0,correct:false,hint:false};
+    if(s.hint)return true;      // already paid
+    if(s.done)return true;      // free after done
+    s.hint=true;
+    this.state.acts[a.id]=s;
+    this.state.points=Math.max(0,this.state.points-cost);
+    this.save();this.updateHUD();
+    this.toast(`💡 Hilfekarte: −${cost} Punkte`);
+    return true;
+  },
+  checkBadges(){
+    let changed=false;
+    WORLDS.forEach(w=>{
+      if(this.worldDone(w)&&!this.state.badges.includes(w.id)){this.state.badges.push(w.id);changed=true;
+        this.toast(`🏅 Neues Abzeichen: ${(BADGES.find(b=>b.id===w.id)||{}).nm||""}`);}
+    });
+    // all done
+    const allDone=WORLDS.every(w=>this.worldDone(w));
+    if(allDone&&!this.state.badges.includes("perfect")){this.state.badges.push("perfect");changed=true;}
+    // no hint used at all AND at least 10 done
+    const doneCount=Object.values(this.state.acts).filter(x=>x.done).length;
+    const anyHint=Object.values(this.state.acts).some(x=>x.hint);
+    if(doneCount>=10&&!anyHint&&!this.state.badges.includes("nohint")){this.state.badges.push("nohint");changed=true;}
+    if(changed)this.save();
+  },
+
+  /* ---- report ---- */
+  renderReport(){
+    const app=document.getElementById("app");
+    let rows="";
+    WORLDS.forEach(w=>{
+      const p=this.worldProgress(w);
+      let got=0;w.acts.forEach(a=>{const s=this.state.acts[a.id];if(s&&s.done)got+=s.points;});
+      const st="★".repeat(this.worldStars(w))+"☆".repeat(3-this.worldStars(w));
+      rows+=`<tr><td>${w.emoji} ${w.title}</td><td>${p.d}/${p.t}</td>
+        <td style="color:var(--gold)">${st}</td><td>${got} Pkt</td></tr>`;
+    });
+    let badgeWall="";
+    BADGES.forEach(b=>{
+      const have=this.state.badges.includes(b.id);
+      badgeWall+=`<div class="badge ${have?"":"locked"}" title="${this.esc(b.cond||"")}"><div class="b-ic">${b.ic}</div>
+        <div class="b-nm">${b.nm}</div></div>`;
+    });
+    // offene / falsche Aufgaben sammeln (Förderliste für die Lehrkraft + Üben)
+    let mistakes="";let mCount=0;
+    WORLDS.forEach(w=>w.acts.forEach(a=>{
+      const s=this.state.acts[a.id];
+      if(s&&s.done&&!s.correct){mCount++;
+        mistakes+=`<tr><td>${w.emoji} ${w.bpe}</td><td>${this.esc((a.q||"").slice(0,68))}…</td></tr>`;}
+    }));
+    const mistakeCard = mCount
+      ? `<div class="card"><h3>🔁 Diese Aufgaben noch üben (${mCount})</h3>
+         <p class="muted" style="font-size:.85rem">Öffne die passende Welt und tippe unter der Aufgabe auf „🔁 Nochmal versuchen“.</p>
+         <table class="rep"><tr><th>Welt</th><th>Aufgabe</th></tr>${mistakes}</table></div>`
+      : `<div class="card center"><h3 style="margin:0">🎯 Keine offenen Fehler – stark gemacht!</h3></div>`;
+    const allDone=WORLDS.every(w=>this.worldDone(w));
+    const cert=allDone?`
+      <div class="cert">
+        <div style="font-size:2.4rem">🏆</div>
+        <div class="ct">Digital-Zertifikat</div>
+        <p style="margin:.4em 0">verliehen an</p>
+        <div style="font-size:1.4rem;font-weight:900">${this.esc(this.state.name)}</div>
+        <p style="margin:.6em 0 0">für das erfolgreiche Meistern aller 7 Welten<br>
+        mit <b>${this.state.points} Punkten</b> · Rang: <b>${this.rank()}</b></p>
+      </div>`:"";
+    app.innerHTML=`
+      <div class="hero" style="padding-bottom:0"><h1>📊 Mein Bericht</h1></div>
+      <div class="card center" style="border:2px solid var(--teal)">
+        <div style="font-size:1.1rem">👤 <b>${this.esc(this.state.name)}</b></div>
+        <div style="font-size:2.2rem;font-weight:900;color:var(--gold);margin:6px 0">⭐ ${this.state.points} Punkte</div>
+        <div>🏅 Rang: <b>${this.rank()}</b> · Abzeichen: <b>${this.state.badges.length}/${BADGES.length}</b></div>
+        ${this.state.startedAt?`<div class="muted" style="font-size:.8rem;margin-top:4px">Gestartet am ${this.esc(this.state.startedAt)}</div>`:""}
+        <p class="muted" style="font-size:.82rem;margin-top:8px">📸 Screenshot oder 📄 Datei-Export für die Bewertung nutzen.</p>
+        <button class="btn ghost" style="margin-top:6px" onclick="CA.exportReport()">📄 Bericht als Datei speichern</button>
+      </div>
+      <div class="card">
+        <h3>Welten-Übersicht</h3>
+        <table class="rep"><tr><th>Welt</th><th>Aufgaben</th><th>Sterne</th><th>Punkte</th></tr>${rows}</table>
+      </div>
+      ${mistakeCard}
+      <div class="card">
+        <h3>Meine Abzeichen</h3>
+        <p class="muted" style="font-size:.8rem;margin-top:-4px">Tipp: Fahre mit der Maus über ein Abzeichen, um zu sehen, wie du es bekommst.</p>
+        <div class="badge-wall">${badgeWall}</div>
+      </div>
+      ${cert}
+      <div class="card">
+        <h3>🏆 Mein Ergebnis-Code</h3>
+        <p class="muted" style="font-size:.9rem;margin-top:-4px">Für die Bestenliste: Zeig, schick oder lies deiner Lehrkraft diesen Code vor.</p>
+        <input type="text" id="myCodeField" readonly value="${this.esc(this.myCode())}" onclick="this.select()">
+        <button class="btn ghost block" onclick="CA.copyCode()">📋 Code kopieren</button>
+      </div>
+      <div class="card center">
+        <button class="btn" onclick="CA.go('map')">🗺️ Zurück zur Weltkarte</button>
+        <button class="btn ghost block" onclick="CA.go('leaderboard')">🏅 Bestenliste (für die Lehrkraft)</button>
+      </div>`;
+    if(allDone&&!this.state.certShown){
+      this.state.certShown=true;this.save();this.beep("win");
+      setTimeout(()=>this.celebrate("🏆","Digital-Meister! Alle 7 Welten geschafft!"),300);
+    }
+  },
+
+  /* Bericht als CSV-Datei speichern (öffnet sich in Excel; robuster als Screenshot) */
+  exportReport(){
+    const lines=[];
+    lines.push("Digital-Abenteuer – Bericht");
+    lines.push("Name;"+(this.state.name||""));
+    lines.push("Datum;"+(this.state.startedAt||""));
+    lines.push("Punkte;"+this.state.points);
+    lines.push("Rang;"+this.rank());
+    lines.push("Abzeichen;"+this.state.badges.length+"/"+BADGES.length);
+    lines.push("");
+    lines.push("Welt;Aufgabe;Ergebnis;Punkte");
+    WORLDS.forEach(w=>w.acts.forEach(a=>{
+      const s=this.state.acts[a.id];
+      const res=!s||!s.done?"offen":s.correct?"richtig":"teils/falsch";
+      const q=(a.q||"").replace(/[\r\n;]+/g," ").slice(0,80);
+      lines.push(w.bpe+";"+q+";"+res+";"+(s?s.points:0));
+    }));
+    const csv="﻿"+lines.join("\r\n");   // BOM -> Umlaute in Excel korrekt
+    try{
+      const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+      const url=URL.createObjectURL(blob);
+      const el=document.createElement("a");
+      el.href=url;
+      el.download="Digital-Abenteuer_"+((this.state.name||"Bericht").replace(/[^a-z0-9]+/gi,"_"))+".csv";
+      document.body.appendChild(el);el.click();
+      setTimeout(()=>{URL.revokeObjectURL(url);el.remove();},600);
+      this.toast("📄 Bericht als Datei gespeichert.");
+    }catch(e){this.toast("Speichern hier nicht möglich – bitte Screenshot nutzen.");}
+  },
+
+  /* ---- Bestenliste (offline, ohne Server) ---- */
+  BOARD_KEY:"ca_av3_board_v1",
+  myCode(){
+    const n=(this.state.name||"?").replace(/[|\n\r]/g," ").trim();
+    return "CA|"+n+"|"+this.state.points+"|"+this.rank();
+  },
+  copyCode(){
+    const code=this.myCode();
+    const done=()=>this.toast("📋 Code kopiert! Gib ihn deiner Lehrkraft.");
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(done,()=>this._copyFallback(code,done));}
+      else this._copyFallback(code,done);
+    }catch(e){this._copyFallback(code,done);}
+  },
+  _copyFallback(code,done){
+    const f=document.getElementById("myCodeField");
+    if(f){f.removeAttribute("readonly");f.select();try{document.execCommand("copy");}catch(e){}f.setAttribute("readonly","");done();}
+    else this.toast("Bitte den Code markieren und kopieren.");
+  },
+  parseCode(line){
+    line=(line||"").trim();if(!line)return null;
+    if(/^CA\|/i.test(line)){
+      const p=line.split("|");const name=(p[1]||"").trim();const pts=parseInt(p[2],10);
+      if(name&&!isNaN(pts))return {name:name,points:pts,rank:(p[3]||"").trim()};
+      return null;
+    }
+    // toleranter Fallback: „Name … 120“ / „Name;120“ / „Name 120 Pkt“
+    const m=line.match(/^(.*?)[\s;,|]+(\d{1,5})\s*(?:pkt|punkte)?\.?$/i);
+    if(m&&m[1].replace(/[\s;,|]+$/,"").trim())
+      return {name:m[1].replace(/[\s;,|]+$/,"").trim(),points:parseInt(m[2],10),rank:""};
+    return null;
+  },
+  renderLeaderboard(){
+    const app=document.getElementById("app");
+    let raw="";try{raw=localStorage.getItem(this.BOARD_KEY)||"";}catch(e){}
+    app.innerHTML=`
+      <div class="hero" style="padding-bottom:0"><h1>🏅 Bestenliste</h1>
+        <p class="muted">Für die Lehrkraft: Sammle die Ergebnis-Codes der SuS (vorlesen, Chat, Netzlaufwerk-Textdatei, USB) und füge sie hier ein.</p></div>
+      <div class="card">
+        <h3>Codes einfügen</h3>
+        <p class="muted" style="font-size:.88rem;margin-top:-4px">Einen Code pro Zeile. Es genügen auch Zeilen wie „Max M. 120“. Alles bleibt nur auf diesem PC.</p>
+        <textarea id="lbIn" style="min-height:120px" placeholder="CA|Max M.|120|Profi&#10;CA|Lena K.|180|Experte&#10;Tom R. 90">${this.esc(raw)}</textarea>
+        <div class="navrow">
+          <button class="btn" onclick="CA.buildBoard()">🏆 Rangliste erstellen</button>
+          <label class="btn ghost" style="cursor:pointer">📂 Datei laden<input type="file" accept=".txt,.csv" style="display:none" onchange="CA.loadBoardFile(event)"></label>
+          <button class="btn ghost" onclick="CA.clearBoard()">🗑️ Liste leeren</button>
+        </div>
+      </div>
+      <div id="lbOut"></div>
+      <div class="card center"><button class="btn" onclick="CA.go('map')">🗺️ Zurück zur Weltkarte</button></div>`;
+    if(raw.trim())this.buildBoard();
+  },
+  loadBoardFile(ev){
+    const file=ev.target&&ev.target.files&&ev.target.files[0];if(!file)return;
+    const r=new FileReader();
+    r.onload=()=>{const ta=document.getElementById("lbIn");
+      if(ta){ta.value=(ta.value.trim()?ta.value.trim()+"\n":"")+String(r.result);}this.buildBoard();};
+    r.readAsText(file);
+  },
+  clearBoard(){
+    const ta=document.getElementById("lbIn");if(ta)ta.value="";
+    try{localStorage.removeItem(this.BOARD_KEY);}catch(e){}
+    const out=document.getElementById("lbOut");if(out)out.innerHTML="";
+    this.toast("Liste geleert.");
+  },
+  buildBoard(){
+    const ta=document.getElementById("lbIn");const out=document.getElementById("lbOut");if(!ta||!out)return;
+    const raw=ta.value;
+    try{localStorage.setItem(this.BOARD_KEY,raw);}catch(e){}
+    const byName={};
+    raw.split(/\r?\n/).forEach(line=>{
+      const e=this.parseCode(line);if(!e)return;
+      const k=e.name.toLowerCase();
+      if(!byName[k]||e.points>byName[k].points)byName[k]=e;   // pro Name bestes Ergebnis
+    });
+    const list=Object.values(byName).sort((a,b)=>b.points-a.points);
+    if(!list.length){out.innerHTML=`<div class="card center muted">Noch keine gültigen Codes erkannt. Füge oben Codes ein und klicke „Rangliste erstellen“.</div>`;return;}
+    const medal=i=>i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
+    let rows="";
+    list.forEach((e,i)=>{
+      rows+=`<tr${i<3?' style="font-weight:800"':''}><td style="text-align:center">${medal(i)}</td>
+        <td>${this.esc(e.name)}</td><td style="color:var(--gold)">${e.points} Pkt</td>
+        <td class="muted">${this.esc(e.rank||"")}</td></tr>`;
+    });
+    out.innerHTML=`
+      <div class="card">
+        <h3>Rangliste · ${list.length} Teilnehmer</h3>
+        <table class="rep"><tr><th style="width:52px">Platz</th><th>Name</th><th>Punkte</th><th>Rang</th></tr>${rows}</table>
+        <p class="muted" style="font-size:.8rem;margin-top:8px">📸 Für den Beamer geeignet. Klicke „Rangliste erstellen“ erneut, wenn neue Codes dazukommen.</p>
+      </div>`;
+  },
+
+  resetAll(){
+    if(!confirm("Wirklich ALLE Punkte und den Fortschritt löschen? Das kann nicht rückgängig gemacht werden."))return;
+    const name=this.state.name,settings=this.state.settings;
+    this.state=this.fresh();this.state.name=name;this.state.started=true;
+    this.state.settings=settings;this.state.startedAt=new Date().toLocaleString("de-DE");
+    this.state.badges.push("start");
+    this._retry={};this._rankIdx=0;
+    this.save();this.toast("Alles zurückgesetzt.");this.go("map");
+  },
+
+  /* ---- toast ---- */
+  toast(msg){
+    const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
+    clearTimeout(this._tt);this._tt=setTimeout(()=>t.classList.remove("show"),1900);
+  },
+  esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));},
+
+  /* =====================================================
+     ACTIVITY RENDERERS
+     ===================================================== */
+  buildActivity(a,num,color){
+    const wrap=document.createElement("div");
+    wrap.className="card act";
+    wrap.dataset.aid=a.id;
+    const stored=this.state.acts[a.id];
+    const done=stored&&stored.done&&!this._retry[a.id];
+    if(done)wrap.classList.add("done");
+    const typeLabel={mc:"Quiz",multi:"Mehrfachauswahl",tfset:"Wahr / Falsch",match:"Zuordnen",
+      order:"Reihenfolge",buckets:"Sortieren",cloze:"Lückentext",short:"Kurzantwort",
+      memory:"Memory-Spiel",sim:"Entscheidung",fakespot:"Fake-Detektiv",password:"Passwort-Spiel",
+      livecell:"Excel-Zelle",inbox:"Postfach",formfill:"Formular"}[a.type]||"Aufgabe";
+    const maxP=this.actMax(a);
+    wrap.innerHTML=`
+      <div class="a-type">${a.boss?"⚡ ":""}${num}. ${typeLabel} · ${maxP} Punkte ${a.boss?'<span class="pill tag-c">Bonus</span>':""}</div>
+      <div class="q">${a.q}</div>
+      <div class="a-body"></div>
+      <div class="fb"></div>
+      <div class="hintbox"></div>
+      <div class="a-foot"></div>`;
+    const body=wrap.querySelector(".a-body");
+    const fb=wrap.querySelector(".fb");
+    const foot=wrap.querySelector(".a-foot");
+    const hintbox=wrap.querySelector(".hintbox");
+
+    // hint button
+    if(a.hint){
+      const hb=document.createElement("button");hb.className="hintbtn";hb.textContent="💡 Hilfekarte (−5)";
+      const alreadyHint=this.state.acts[a.id]&&this.state.acts[a.id].hint;
+      if(alreadyHint||done){hintbox.textContent="💡 "+a.hint;hintbox.classList.add("show");hb.disabled=true;}
+      hb.onclick=()=>{this.spendHint(a,5);hintbox.textContent="💡 "+a.hint;hintbox.classList.add("show");hb.disabled=true;};
+      foot.appendChild(hb);
+    }
+
+    const showFB=(good,txt)=>{fb.className="fb show "+(good?"good":"bad");fb.innerHTML=txt;};
+
+    // dispatch
+    const R=this["r_"+a.type];
+    R.call(this,a,body,foot,showFB,done);
+
+    // 🔊 Vorlese-Knopf (immer verfügbar, unabhängig vom globalen Schalter)
+    const spk=document.createElement("button");spk.className="spk";spk.type="button";
+    spk.textContent="🔊";spk.title="Aufgabe vorlesen";
+    spk.onclick=()=>this.speak(this.readText(a));
+    foot.appendChild(spk);
+
+    // 🔁 Nochmal-üben-Knopf: nur wenn erledigt, noch nicht perfekt und noch nicht wiederholt
+    if(done&&stored&&!stored.correct&&!stored.retried&&a.type!=="memory"){
+      const rt=document.createElement("button");rt.className="retrybtn";rt.type="button";
+      rt.textContent="🔁 Nochmal versuchen";
+      rt.onclick=()=>this.startRetry(a);
+      foot.appendChild(rt);
+    }
+    return wrap;
+  },
+  kwMatch(hay,kw){
+    // Mehrwort-Stichwörter direkt suchen; Einzelwörter mit linker Wortgrenze,
+    // damit z. B. "finden" nicht innerhalb von "erfinden" fälschlich trifft.
+    if(kw.indexOf(" ")>=0)return hay.indexOf(kw)>=0;
+    const esc=kw.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    try{return new RegExp("(^|[^a-zäöüß0-9])"+esc,"i").test(hay);}
+    catch(e){return hay.indexOf(kw)>=0;}
+  },
+  readText(a){
+    let t=(a.q||"")+". ";
+    if(a.scene)t+=a.scene+". ";
+    if(a.options)t+=a.options.join(". ");
+    if(a.statements)t+=a.statements.map(s=>s.st).join(". ");
+    if(a.choices)t+=a.choices.map(c=>c.text).join(". ");
+    return t;
+  },
+
+  lockNote(a){
+    const s=this.state.acts[a.id];
+    return `<span class="a-pts">Erledigt: +${s?s.points:0} Pkt</span>`;
+  },
+
+  /* MULTIPLE CHOICE */
+  r_mc(a,body,foot,showFB,done){
+    let chosen=-1;
+    a.options.forEach((o,i)=>{
+      const b=document.createElement("button");b.className="opt";b.textContent=o;
+      b.onclick=()=>{if(done)return;
+        [...body.children].forEach(c=>c.classList.remove("sel"));b.classList.add("sel");chosen=i;};
+      body.appendChild(b);
+    });
+    if(done){this.mcReveal(a,body);foot.insertAdjacentHTML("beforeend",this.lockNote(a));
+      showFB(this.state.acts[a.id].correct,(this.state.acts[a.id].correct?"✅ ":"")+a.explain);return;}
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Prüfen";
+    chk.onclick=()=>{
+      if(chosen<0){this.toast("Bitte zuerst eine Antwort wählen.");return;}
+      const correct=chosen===a.answer;
+      this.mcReveal(a,body,chosen);
+      [...body.children].forEach(c=>c.classList.add("disabled"));
+      const pts=this.scorePts(a,correct);
+      let fbTxt;
+      if(correct){fbTxt="✅ Richtig! "+a.explain;}
+      else{
+        const w=(a.why&&a.why[chosen])?this.esc(a.why[chosen])+" ":"";
+        fbTxt="❌ Nicht ganz. "+w+a.explain;
+      }
+      showFB(correct,fbTxt);
+      chk.remove();this.complete(a,pts,correct);
+    };
+    foot.appendChild(chk);
+  },
+  mcReveal(a,body,chosen){
+    [...body.children].forEach((c,i)=>{
+      c.classList.add("disabled");
+      if(i===a.answer)c.classList.add("correct");
+      if(chosen!==undefined&&i===chosen&&chosen!==a.answer)c.classList.add("wrong");
+    });
+  },
+
+  /* TRUE/FALSE SET */
+  r_tfset(a,body,foot,showFB,done){
+    const picks={};
+    a.statements.forEach((s,i)=>{
+      const row=document.createElement("div");row.className="tf-row";
+      row.innerHTML=`<span class="st">${s.st}</span>`;
+      const bt=document.createElement("button");bt.className="tf-btn";bt.textContent="Wahr";
+      const bf=document.createElement("button");bf.className="tf-btn";bf.textContent="Falsch";
+      bt.onclick=()=>{if(done)return;picks[i]=true;bt.classList.add("sel");bf.classList.remove("sel");};
+      bf.onclick=()=>{if(done)return;picks[i]=false;bf.classList.add("sel");bt.classList.remove("sel");};
+      row.appendChild(bt);row.appendChild(bf);
+      row._bt=bt;row._bf=bf;body.appendChild(row);
+    });
+    const reveal=()=>{
+      [...body.children].forEach((row,i)=>{
+        const s=a.statements[i];const good=s.correct;
+        (good?row._bt:row._bf).classList.add("correct");
+        row._bt.disabled=row._bf.disabled=true;
+      });
+    };
+    if(done){reveal();foot.insertAdjacentHTML("beforeend",this.lockNote(a));
+      showFB(true,a.explain);return;}
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Prüfen";
+    chk.onclick=()=>{
+      if(Object.keys(picks).length<a.statements.length){this.toast("Bitte alle Aussagen bewerten.");return;}
+      let right=0;
+      [...body.children].forEach((row,i)=>{
+        const s=a.statements[i];const ok=picks[i]===s.correct;
+        if(ok)right++;
+        const selBtn=picks[i]?row._bt:row._bf;
+        selBtn.classList.add(ok?"correct":"wrong");
+        (s.correct?row._bt:row._bf).classList.add("correct");
+        row._bt.disabled=row._bf.disabled=true;
+      });
+      const pts=this.hintAdjust(a,right*5);
+      const allRight=right===a.statements.length;
+      showFB(allRight,`${right} von ${a.statements.length} richtig. ${a.explain}`);
+      chk.remove();this.complete(a,pts,allRight);
+    };
+    foot.appendChild(chk);
+  },
+
+  /* MATCH (click to connect) */
+  r_match(a,body,foot,showFB,done){
+    const left=a.pairs.map((p,i)=>({t:p.l,i}));
+    const right=a.pairs.map((p,i)=>({t:p.r,i}));
+    this.shuffle(right);
+    const grid=document.createElement("div");grid.className="match-grid";
+    const lc=document.createElement("div");lc.className="m-col";
+    const rc=document.createElement("div");rc.className="m-col";
+    grid.appendChild(lc);grid.appendChild(rc);body.appendChild(grid);
+    let pickedL=null;const links={};let count=0;const labels="ABCDEFGHIJKLMNOP";
+    const lEls={},rEls={};
+    left.forEach(o=>{const e=document.createElement("div");e.className="m-item";e.textContent=o.t;
+      e.onclick=()=>{if(done||links[o.i]!==undefined)return;
+        Object.values(lEls).forEach(x=>x.classList.remove("picked"));
+        pickedL=o.i;e.classList.add("picked");};
+      lEls[o.i]=e;lc.appendChild(e);});
+    right.forEach(o=>{const e=document.createElement("div");e.className="m-item";e.textContent=o.t;
+      e.onclick=()=>{if(done||pickedL===null||e.classList.contains("linked"))return;
+        links[pickedL]=o.i;
+        const lab=labels[count++];
+        lEls[pickedL].classList.remove("picked");lEls[pickedL].classList.add("linked");
+        lEls[pickedL].innerHTML=left.find(x=>x.i===pickedL).t+`<span class="lbl">${lab}</span>`;
+        e.classList.add("linked");e.innerHTML=o.t+`<span class="lbl">${lab}</span>`;
+        pickedL=null;};
+      rEls[o.i]=e;rc.appendChild(e);});
+
+    if(done){ // show solution
+      a.pairs.forEach((p,i)=>{lEls[i]&&lEls[i].classList.add("linked");});
+      foot.insertAdjacentHTML("beforeend",this.lockNote(a));
+      showFB(this.state.acts[a.id].correct,a.explain);
+      body.innerHTML="";const g2=document.createElement("div");g2.className="match-grid";
+      const l2=document.createElement("div");l2.className="m-col";const r2=document.createElement("div");r2.className="m-col";
+      a.pairs.forEach(p=>{const e=document.createElement("div");e.className="m-item linked";e.textContent=p.l;l2.appendChild(e);
+        const f=document.createElement("div");f.className="m-item linked";f.textContent=p.r;r2.appendChild(f);});
+      g2.appendChild(l2);g2.appendChild(r2);body.appendChild(g2);
+      return;
+    }
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Prüfen";
+    chk.onclick=()=>{
+      if(Object.keys(links).length<a.pairs.length){this.toast("Bitte alle Paare verbinden.");return;}
+      let right=0;
+      Object.keys(links).forEach(li=>{if(parseInt(li)===links[li])right++;});
+      const allRight=right===a.pairs.length;
+      // mark
+      Object.keys(links).forEach(li=>{const ok=parseInt(li)===links[li];
+        if(ok){lEls[li].classList.add("linked");rEls[links[li]].classList.add("linked");}
+        else{lEls[li].classList.add("badlink");rEls[links[li]].classList.add("badlink");}});
+      const pts=this.hintAdjust(a,Math.round(right/a.pairs.length*10));
+      showFB(allRight,`${right} von ${a.pairs.length} richtig verbunden. ${a.explain}`);
+      chk.remove();this.complete(a,pts,allRight);
+    };
+    foot.appendChild(chk);
+  },
+
+  /* ORDER */
+  r_order(a,body,foot,showFB,done){
+    const correct=a.items.slice();
+    let cur=correct.slice();
+    if(!done){let g=0;do{this.shuffle(cur);}while(cur.join("|")===correct.join("|")&&++g<50);}
+    const list=document.createElement("div");list.className="order-list";body.appendChild(list);
+    const draw=()=>{
+      list.innerHTML="";
+      cur.forEach((it,i)=>{
+        const row=document.createElement("div");row.className="o-item";
+        row.innerHTML=`<div class="o-num">${i+1}</div><div style="flex:1">${it}</div>`;
+        if(!done){
+          const mv=document.createElement("div");mv.className="o-move";
+          const up=document.createElement("button");up.textContent="▲";up.title="nach oben";
+          up.onclick=()=>{if(i>0){[cur[i-1],cur[i]]=[cur[i],cur[i-1]];draw();}};
+          const dn=document.createElement("button");dn.textContent="▼";dn.title="nach unten";
+          dn.onclick=()=>{if(i<cur.length-1){[cur[i+1],cur[i]]=[cur[i],cur[i+1]];draw();}};
+          mv.appendChild(up);mv.appendChild(dn);row.appendChild(mv);
+        }
+        list.appendChild(row);
+      });
+    };
+    if(done){cur=correct.slice();draw();[...list.children].forEach(r=>r.classList.add("correct"));
+      foot.insertAdjacentHTML("beforeend",this.lockNote(a));showFB(this.state.acts[a.id].correct,a.explain);return;}
+    draw();
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Prüfen";
+    chk.onclick=()=>{
+      let right=0;cur.forEach((it,i)=>{if(it===correct[i])right++;});
+      const allRight=right===correct.length;
+      [...list.children].forEach((r,i)=>r.classList.add(cur[i]===correct[i]?"correct":"wrong"));
+      const pts=this.hintAdjust(a,allRight?10:Math.round(right/correct.length*10));
+      showFB(allRight,(allRight?"✅ Perfekte Reihenfolge! ":`${right} von ${correct.length} an richtiger Stelle. `)+a.explain);
+      chk.remove();this.complete(a,pts,allRight);
+    };
+    foot.appendChild(chk);
+  },
+
+  /* BUCKETS (click to place, + drag) */
+  r_buckets(a,body,foot,showFB,done){
+    const itemsWrap=document.createElement("div");itemsWrap.className="bucket-items";
+    const buckets=document.createElement("div");buckets.className="buckets";
+    body.appendChild(itemsWrap);body.appendChild(buckets);
+    const placed={}; // item->bucket
+    let picked=null;
+    const bucketEls={};
+    const chipEls={};   // item->chip (statt CSS.escape-Query -> robust auf alten Browsern)
+    a.buckets.forEach(bn=>{
+      const bx=document.createElement("div");bx.className="bucket";
+      bx.innerHTML=`<h4>${bn}</h4><div class="drop"></div>`;
+      bx.addEventListener("dragover",e=>{e.preventDefault();bx.classList.add("over");});
+      bx.addEventListener("dragleave",()=>bx.classList.remove("over"));
+      bx.addEventListener("drop",e=>{e.preventDefault();bx.classList.remove("over");
+        const t=e.dataTransfer.getData("text");if(t)place(t,bn);});
+      bx.onclick=()=>{if(picked!==null)place(picked,bn);};
+      bucketEls[bn]=bx;buckets.appendChild(bx);
+    });
+    const items=a.items.map(x=>x.text);this.shuffle(items);
+    const itemEls={};
+    items.forEach(txt=>{
+      const it=document.createElement("div");it.className="b-item";it.textContent=txt;it.draggable=!done;
+      it.addEventListener("dragstart",e=>e.dataTransfer.setData("text",txt));
+      it.onclick=()=>{if(done||placed[txt])return;
+        Object.values(itemEls).forEach(x=>x.classList.remove("picked"));
+        picked=txt;it.classList.add("picked");};
+      itemEls[txt]=it;itemsWrap.appendChild(it);
+    });
+    function place(txt,bn){
+      placed[txt]=bn;picked=null;
+      itemEls[txt].classList.remove("picked");itemEls[txt].classList.add("placed");
+      const chip=document.createElement("span");chip.className="drop-chip";chip.textContent=txt;
+      chip.onclick=()=>{if(done)return;delete placed[txt];delete chipEls[txt];chip.remove();itemEls[txt].classList.remove("placed");};
+      chipEls[txt]=chip;
+      bucketEls[bn].querySelector(".drop").appendChild(chip);
+    }
+    if(done){
+      a.items.forEach(x=>place(x.text,x.bucket));
+      buckets.querySelectorAll(".drop-chip").forEach(c=>c.classList.add("correct"));
+      itemsWrap.style.display="none";
+      foot.insertAdjacentHTML("beforeend",this.lockNote(a));
+      showFB(this.state.acts[a.id].correct,a.explain);return;
+    }
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Prüfen";
+    chk.onclick=()=>{
+      if(Object.keys(placed).length<a.items.length){this.toast("Bitte alle Begriffe einsortieren.");return;}
+      let right=0;
+      a.items.forEach(x=>{
+        const chip=chipEls[x.text];
+        const ok=placed[x.text]===x.bucket;if(ok)right++;
+        if(chip)chip.classList.add(ok?"correct":"wrong");
+      });
+      const allRight=right===a.items.length;
+      [...itemsWrap.children,...buckets.querySelectorAll('.b-item')].forEach(()=>{});
+      const pts=this.hintAdjust(a,Math.round(right/a.items.length*10));
+      showFB(allRight,`${right} von ${a.items.length} richtig sortiert. ${a.explain}`);
+      chk.remove();this.complete(a,pts,allRight);
+    };
+    foot.appendChild(chk);
+  },
+
+  /* CLOZE */
+  r_cloze(a,body,foot,showFB,done){
+    const box=document.createElement("div");box.className="cloze";
+    const parts=a.template.split(/(\{\d+\})/g);
+    const selects=[];
+    parts.forEach(p=>{
+      const m=p.match(/^\{(\d+)\}$/);
+      if(m){
+        const bi=parseInt(m[1]);const b=a.blanks[bi];
+        const sel=document.createElement("select");
+        sel.innerHTML=`<option value="-1">— wählen —</option>`+
+          b.options.map((o,i)=>`<option value="${i}">${o}</option>`).join("");
+        if(done){sel.value=b.answer;sel.disabled=true;sel.classList.add("correct");}
+        selects[bi]=sel;box.appendChild(sel);
+      }else{box.appendChild(document.createTextNode(p));}
+    });
+    body.appendChild(box);
+    if(done){foot.insertAdjacentHTML("beforeend",this.lockNote(a));showFB(this.state.acts[a.id].correct,a.explain);return;}
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Prüfen";
+    chk.onclick=()=>{
+      if(selects.some(s=>s.value==="-1")){this.toast("Bitte alle Lücken ausfüllen.");return;}
+      let right=0;const wrongInfo=[];
+      selects.forEach((s,i)=>{const ok=parseInt(s.value)===a.blanks[i].answer;if(ok)right++;
+        s.disabled=true;s.classList.add(ok?"correct":"wrong");
+        if(!ok){
+          // Schülerwahl bleibt sichtbar (rot). Richtige Lösung als grünes disabled-Element daneben zeigen.
+          const sol=document.createElement("span");
+          sol.className="cloze-sol";
+          sol.textContent="richtig: "+a.blanks[i].options[a.blanks[i].answer];
+          if(s.parentNode)s.parentNode.insertBefore(sol,s.nextSibling);
+          wrongInfo.push(a.blanks[i].options[a.blanks[i].answer]);
+        }});
+      const allRight=right===a.blanks.length;
+      const pts=this.hintAdjust(a,Math.round(right/a.blanks.length*10));
+      const solNote=wrongInfo.length?` Richtig wäre: „${wrongInfo.join("“, „")}“.`:"";
+      showFB(allRight,`${right} von ${a.blanks.length} Lücken richtig.${solNote} ${a.explain}`);
+      chk.remove();this.complete(a,pts,allRight);
+    };
+    foot.appendChild(chk);
+  },
+
+  /* SHORT ANSWER */
+  r_short(a,body,foot,showFB,done){
+    const ta=document.createElement("textarea");ta.placeholder="Schreibe deine Antwort hier …";
+    if(done){ta.value=(this.state.acts[a.id].answerText)||"";ta.disabled=true;}
+    body.appendChild(ta);
+    if(done){foot.insertAdjacentHTML("beforeend",this.lockNote(a));
+      showFB(this.state.acts[a.id].correct,`<b>Beispiel-Lösung:</b> ${a.sample}<br>${a.explain}`);return;}
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Antwort prüfen";
+    chk.onclick=()=>{
+      const val=ta.value.trim();
+      if(val.length<3){this.toast("Bitte schreibe zuerst eine Antwort.");return;}
+      let ok;
+      if(a.checkId&&this.CHECKS[a.checkId]){
+        ok=this.CHECKS[a.checkId](val);
+      }else{
+        const low=val.toLowerCase();
+        const need=a.minKw||1;
+        let hits=0;(a.keywords||[]).forEach(k=>{if(this.kwMatch(low,k.toLowerCase()))hits++;});
+        ok=hits>=need;
+      }
+      const pts=this.hintAdjust(a,ok?(a.boss?20:10):5); // Kurzantwort: Teilpunkte fürs Versuchen
+      ta.disabled=true;
+      this.state.acts[a.id]=this.state.acts[a.id]||{};
+      // store text before complete
+      const prevHint=(this.state.acts[a.id]||{}).hint;
+      showFB(ok, (ok?"✅ Gut! Wichtige Stichwörter erkannt. ":"Danke für deinen Versuch. ")+
+        `<br><b>Beispiel-Lösung:</b> ${a.sample}<br>${a.explain}`);
+      chk.remove();
+      this.complete(a,pts,ok);
+      this.state.acts[a.id].answerText=val;this.state.acts[a.id].hint=prevHint;this.save();
+    };
+    foot.appendChild(chk);
+  },
+
+  /* MEMORY */
+  r_memory(a,body,foot,showFB,done){
+    const grid=document.createElement("div");grid.className="mem-grid";body.appendChild(grid);
+    if(done){body.innerHTML=`<p class="muted">✔️ Memory gelöst.</p>`;
+      foot.insertAdjacentHTML("beforeend",this.lockNote(a));showFB(true,a.explain);return;}
+    let cards=[];
+    a.pairs.forEach((p,i)=>{cards.push({txt:p.a,pair:i});cards.push({txt:p.b,pair:i});});
+    this.shuffle(cards);
+    let first=null,lock=false,found=0,tries=0;
+    cards.forEach(c=>{
+      const el=document.createElement("div");el.className="mem-card";
+      el.innerHTML=`<span class="front">❓</span>`;
+      el.onclick=()=>{
+        if(lock||el.classList.contains("matched")||el===first)return;
+        el.classList.add("flip");el.innerHTML=c.txt;
+        if(!first){first=el;first._c=c;return;}
+        tries++;
+        if(first._c.pair===c.pair){
+          el.classList.add("matched");first.classList.add("matched");
+          el.classList.remove("flip");first.classList.remove("flip");
+          first=null;found++;
+          if(found===a.pairs.length)finish();
+        }else{
+          lock=true;const f=first;
+          setTimeout(()=>{el.classList.remove("flip");f.classList.remove("flip");
+            el.innerHTML=`<span class="front">❓</span>`;f.innerHTML=`<span class="front">❓</span>`;
+            first=null;lock=false;},750);
+        }
+      };
+      grid.appendChild(el);
+    });
+    const finish=()=>{
+      const pts=this.hintAdjust(a,10);
+      const lob=tries<=a.pairs.length?"Perfekt, ohne Fehler! ":"";
+      showFB(true,`✅ ${lob}Alle Paare gefunden mit ${tries} Versuchen! ${a.explain}`);
+      this.complete(a,pts,true);
+    };
+    foot.insertAdjacentHTML("beforeend",`<span class="muted" style="font-size:.85rem">Finde alle Paare.</span>`);
+  },
+
+  /* SIM */
+  r_sim(a,body,foot,showFB,done){
+    body.innerHTML=`<div class="sim-scene">${a.scene}</div>`;
+    if(done){
+      const s=this.state.acts[a.id];
+      body.innerHTML+=`<p class="muted">Deine Entscheidung wurde gewertet.</p>`;
+      foot.insertAdjacentHTML("beforeend",this.lockNote(a));
+      showFB(s.correct,a.explain);return;
+    }
+    a.choices.forEach(ch=>{
+      const b=document.createElement("button");b.className="sim-choice";b.textContent=ch.text;
+      b.onclick=()=>{
+        if(b._used)return;b._used=true;   // Doppelklick-Schutz
+        [...body.querySelectorAll(".sim-choice")].forEach(x=>x.style.display="none");
+        const best=Math.max(...a.choices.map(c=>c.points))||1;
+        const correct=ch.points===best;
+        // Punkte auf actMax skalieren -> Sterne/HUD bleiben konsistent
+        const pts=this.hintAdjust(a,Math.round(ch.points/best*this.actMax(a)));
+        showFB(correct,`${ch.feedback}<br><br>${a.explain}`);
+        this.complete(a,pts,correct);
+      };
+      body.appendChild(b);
+    });
+  },
+
+  /* FAKESPOT */
+  r_fakespot(a,body,foot,showFB,done){
+    const web=document.createElement("div");web.className="fake-web";
+    web.innerHTML=`<div class="fake-bar">🔒❓ ${a.url}</div>`;
+    const bodyEl=document.createElement("div");bodyEl.className="fake-body";web.appendChild(bodyEl);
+    const picks=new Set();
+    a.els.forEach((el,i)=>{
+      const d=document.createElement("div");d.className="fake-el";d.textContent=el.text;
+      d.onclick=()=>{if(done)return;
+        if(picks.has(i)){picks.delete(i);d.classList.remove("picked");}
+        else{picks.add(i);d.classList.add("picked");}};
+      d._el=el;bodyEl.appendChild(d);
+    });
+    body.appendChild(web);
+    if(done){
+      [...bodyEl.children].forEach(d=>{if(d._el.warn)d.classList.add("hit");});
+      foot.insertAdjacentHTML("beforeend",this.lockNote(a));showFB(this.state.acts[a.id].correct,a.explain);return;}
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Warnzeichen prüfen";
+    chk.onclick=()=>{
+      let right=0;const totalWarn=a.els.filter(e=>e.warn).length;
+      [...bodyEl.children].forEach((d,i)=>{
+        const warn=d._el.warn,picked=picks.has(i);
+        if(warn&&picked){d.classList.add("hit");right++;}
+        else if(!warn&&picked){d.classList.add("miss");right--;}
+        else if(warn&&!picked){d.classList.add("miss");}
+      });
+      right=Math.max(0,right);
+      const allRight=right===totalWarn;
+      const pts=this.hintAdjust(a,Math.round(right/totalWarn*10));
+      showFB(allRight,`${right} von ${totalWarn} Warnzeichen gefunden. ${a.explain}`);
+      chk.remove();this.complete(a,pts,allRight);
+    };
+    foot.appendChild(chk);
+  },
+
+  /* PASSWORD */
+  r_password(a,body,foot,showFB,done){
+    if(done){body.innerHTML=`<p class="muted">✔️ Sicheres Passwort erstellt.</p>`;
+      foot.insertAdjacentHTML("beforeend",this.lockNote(a));showFB(true,a.explain);return;}
+    body.innerHTML=`
+      <input type="text" id="pwIn_${a.id}" placeholder="Tippe hier ein Passwort …" maxlength="40">
+      <div class="pw-meter"><span id="pwBar_${a.id}"></span></div>
+      <ul class="pw-checks" id="pwList_${a.id}">
+        <li data-k="len">Mindestens 8 Zeichen lang</li>
+        <li data-k="low">Enthält Kleinbuchstaben (a–z)</li>
+        <li data-k="up">Enthält Großbuchstaben (A–Z)</li>
+        <li data-k="num">Enthält eine Zahl (0–9)</li>
+        <li data-k="sym">Enthält ein Sonderzeichen (! ? # …)</li>
+      </ul>`;
+    const inp=body.querySelector("input");
+    const bar=body.querySelector(".pw-meter>span");
+    const list=body.querySelector(".pw-checks");
+    let solved=false;
+    // Knopf zuerst anlegen, damit check() ihn sicher referenzieren kann
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Ich gebe auf – Lösung zeigen";
+    const check=()=>{
+      const v=inp.value;
+      const c={len:v.length>=8,low:/[a-z]/.test(v),up:/[A-Z]/.test(v),num:/[0-9]/.test(v),
+        sym:/[^A-Za-z0-9]/.test(v)};
+      let score=0;list.querySelectorAll("li").forEach(li=>{const ok=c[li.dataset.k];
+        li.classList.toggle("ok",ok);if(ok)score++;});
+      const pct=score/5*100;bar.style.width=pct+"%";
+      bar.style.background=pct<40?"var(--red)":pct<80?"var(--amber)":"var(--green)";
+      if(score===5&&!solved){solved=true;
+        inp.disabled=true;
+        const pts=this.hintAdjust(a,10);
+        showFB(true,"✅ Stark! Dieses Passwort erfüllt alle Regeln. "+a.explain);
+        chk.remove();
+        this.complete(a,pts,true);
+      }
+    };
+    inp.addEventListener("input",check);
+    chk.onclick=()=>{if(solved)return;
+      inp.disabled=true;
+      showFB(false,"Kein Problem – so sieht ein starkes Passwort aus: <b>Sonne+Regen2024!</b> "+a.explain);
+      chk.remove();this.complete(a,0,false);   // Aufgeben: keine Punkte, aber „🔁 Nochmal“ bleibt möglich
+    };
+    foot.appendChild(chk);
+  },
+
+  /* LIVECELL – echte Mini-Excel-Zelle mit sicherem Formel-Parser (kein eval) */
+  cellVal(cells,ref){
+    // ref z.B. "B3" -> Zahl aus cells (case-insensitive), nicht vorhanden = 0
+    const key=Object.keys(cells).find(k=>k.toUpperCase()===ref.toUpperCase());
+    if(key===undefined)return 0;
+    const n=parseFloat(String(cells[key]).replace(",","."));
+    return isNaN(n)?0:n;
+  },
+  rangeVals(cells,range){
+    // "B1:B3" -> Array der Werte; nur gleiche Spalte oder gleiche Zeile
+    const m=range.match(/^([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)$/);
+    if(!m)return null;
+    const c1=m[1].toUpperCase(),r1=parseInt(m[2]),c2=m[3].toUpperCase(),r2=parseInt(m[4]);
+    const out=[];
+    if(c1===c2){
+      const lo=Math.min(r1,r2),hi=Math.max(r1,r2);
+      for(let r=lo;r<=hi;r++)out.push(this.cellVal(cells,c1+r));
+    }else if(r1===r2){
+      // Spaltenbereich über eine Zeile (nur A/B hier, aber allgemein einfach)
+      const a=c1.charCodeAt(0),b=c2.charCodeAt(0);
+      const lo=Math.min(a,b),hi=Math.max(a,b);
+      for(let c=lo;c<=hi;c++)out.push(this.cellVal(cells,String.fromCharCode(c)+r1));
+    }else return null;
+    return out;
+  },
+  evalFormula(cells,raw){
+    // Sicherer Parser: gibt Zahl zurück oder null bei Fehler. KEIN eval/Function.
+    let s=(raw||"").trim();
+    if(s.charAt(0)!=="=")return null;      // führendes = Pflicht
+    s=s.slice(1).replace(/\s+/g,"");
+    if(s==="")return null;
+    // Funktion? SUMME/MITTELWERT/MAX/MIN(...)
+    const fm=s.match(/^(SUMME|MITTELWERT|MAX|MIN)\((.+)\)$/i);
+    if(fm){
+      const fn=fm[1].toUpperCase();const inside=fm[2];
+      let vals=null;
+      if(/^[A-Za-z]+\d+:[A-Za-z]+\d+$/.test(inside)){
+        vals=this.rangeVals(cells,inside);
+      }else{
+        // Einzelargumente mit ; getrennt: Zellbezüge oder Zahlen
+        const args=inside.split(";");
+        vals=[];
+        for(const arg of args){
+          if(arg==="")return null;
+          if(/^[A-Za-z]+\d+$/.test(arg)){vals.push(this.cellVal(cells,arg));}
+          else if(/^-?\d+(\.\d+)?$/.test(arg)){vals.push(parseFloat(arg));}
+          else return null;
+        }
+      }
+      if(!vals||vals.length===0)return null;
+      if(fn==="SUMME")return vals.reduce((x,y)=>x+y,0);
+      if(fn==="MITTELWERT")return vals.reduce((x,y)=>x+y,0)/vals.length;
+      if(fn==="MAX")return Math.max.apply(null,vals);
+      if(fn==="MIN")return Math.min.apply(null,vals);
+      return null;
+    }
+    // Einfache Rechnung: Zellbezüge / Zahlen, verbunden mit + - * /
+    // Tokenize: nur erlaubte Zeichen zulassen
+    if(!/^([A-Za-z]+\d+|-?\d+(\.\d+)?|[+\-*/])+$/.test(s))return null;
+    const tokens=s.match(/([A-Za-z]+\d+|\d+(?:\.\d+)?|[+\-*/])/g);
+    if(!tokens)return null;
+    // In Zahlen + Operatoren umwandeln, dann links-nach-rechts mit Punkt-vor-Strich
+    const nums=[],ops=[];
+    let expectVal=true;
+    for(const t of tokens){
+      if(t==="+"||t==="-"||t==="*"||t==="/"){
+        if(expectVal)return null;      // Operator an falscher Stelle
+        ops.push(t);expectVal=true;
+      }else{
+        if(!expectVal)return null;      // zwei Werte hintereinander
+        let n;
+        if(/^[A-Za-z]+\d+$/.test(t))n=this.cellVal(cells,t);
+        else n=parseFloat(t);
+        if(isNaN(n))return null;
+        nums.push(n);expectVal=false;
+      }
+    }
+    if(expectVal)return null;           // endet mit Operator
+    // Punkt vor Strich
+    for(let i=0;i<ops.length;){
+      if(ops[i]==="*"||ops[i]==="/"){
+        const r=ops[i]==="*"?nums[i]*nums[i+1]:(nums[i+1]===0?null:nums[i]/nums[i+1]);
+        if(r===null)return null;
+        nums.splice(i,2,r);ops.splice(i,1);
+      }else i++;
+    }
+    let res=nums[0];
+    for(let i=0;i<ops.length;i++){
+      if(ops[i]==="+")res+=nums[i+1];else res-=nums[i+1];
+    }
+    return (typeof res==="number"&&isFinite(res))?res:null;
+  },
+  liveGridHTML(g,fillTarget){
+    // baut die Tabelle; wenn fillTarget=Zahl -> Zielzelle mit dem Wert, sonst "?"
+    let html='<table class="xl-tab"><tr><th class="xl-corner"></th>';
+    g.cols.forEach(c=>{html+=`<th>${c}</th>`;});
+    html+='</tr>';
+    const totalRows=g.rows+1;
+    for(let r=1;r<=totalRows;r++){
+      html+=`<tr><th class="xl-rownum">${r}</th>`;
+      g.cols.forEach(c=>{
+        const ref=c+r;
+        let cls="",content="";
+        if(ref===g.targetCell){
+          cls=" xl-target";
+          content=(fillTarget!==undefined&&fillTarget!==null)?this.esc(String(fillTarget)):'<span class="xl-q">?</span>';
+        }else if(ref===g.targetLabelCell){
+          content=this.esc(g.targetLabel||"");
+        }else if(g.cells[ref]!==undefined){
+          content=this.esc(String(g.cells[ref]));
+        }
+        html+=`<td class="xl-cell${cls}" data-ref="${ref}">${content}</td>`;
+      });
+      html+='</tr>';
+    }
+    html+='</table>';
+    return html;
+  },
+  r_livecell(a,body,foot,showFB,done){
+    const g=a.grid;
+    if(done){
+      body.innerHTML=this.liveGridHTML(g,g.targetValue);
+      foot.insertAdjacentHTML("beforeend",this.lockNote(a));
+      showFB(this.state.acts[a.id].correct,a.explain);return;
+    }
+    const wrap=document.createElement("div");
+    wrap.innerHTML=this.liveGridHTML(g,null)+
+      `<div class="xl-input-row">
+         <label class="xl-lbl">Formel für ${g.targetCell}:</label>
+         <input type="text" class="xl-formula" placeholder="Formel hier eingeben, z.B. =SUMME(...)" maxlength="60">
+       </div>
+       <div class="xl-result muted">Ergebnis erscheint hier live in der gelben Zelle.</div>`;
+    body.appendChild(wrap);
+    const inp=wrap.querySelector(".xl-formula");
+    const targetTd=wrap.querySelector('.xl-cell.xl-target');
+    const resEl=wrap.querySelector(".xl-result");
+    let solved=false;
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Ich gebe auf – Lösung zeigen";
+    const live=()=>{
+      if(solved)return;
+      const v=inp.value;
+      if(v.trim()===""){targetTd.innerHTML='<span class="xl-q">?</span>';resEl.textContent="";resEl.className="xl-result muted";return;}
+      const r=this.evalFormula(g.cells,v);
+      if(r===null){
+        targetTd.innerHTML='<span class="xl-err">#FEHLER</span>';
+        resEl.textContent="Diese Formel versteht Excel nicht. Beginne mit = .";resEl.className="xl-result bad";
+        return;
+      }
+      // Zahl schön anzeigen (ganze Zahl ohne Komma)
+      const shown=(Math.round(r*1000)/1000);
+      targetTd.textContent=String(shown);
+      resEl.className="xl-result";
+      if(Math.abs(r-g.targetValue)<0.001){
+        solved=true;
+        this.beep("good");
+        inp.disabled=true;
+        resEl.textContent="Richtig!";
+        showFB(true,"✅ Stark! Die Zelle rechnet: "+shown+". "+a.explain);
+        chk.remove();
+        this.complete(a,this.hintAdjust(a,this.actMax(a)),true);
+      }else{
+        resEl.textContent="Ergebnis: "+shown+" – noch nicht das Ziel.";
+      }
+    };
+    inp.addEventListener("input",live);
+    chk.onclick=()=>{if(solved)return;
+      inp.value="=SUMME("+g.targetCell.charAt(0)+"1:"+g.targetCell.charAt(0)+g.rows+")";
+      inp.disabled=true;
+      targetTd.textContent=String(g.targetValue);
+      showFB(false,"Kein Problem – so geht's: <b>"+this.esc(a.hint||"")+"</b> "+a.explain);
+      chk.remove();this.complete(a,0,false);
+    };
+    foot.appendChild(chk);
+  },
+
+  /* INBOX – Postfach sortieren */
+  r_inbox(a,body,foot,showFB,done){
+    const acts={"behalten":"📂 Behalten","melden":"🚨 Melden","löschen":"🗑️ Löschen"};
+    const order=["behalten","melden","löschen"];
+    const chosen={};   // index -> action
+    const rowEls=[];
+    a.mails.forEach((m,i)=>{
+      const row=document.createElement("div");row.className="mail-row";
+      row.innerHTML=`
+        <div class="mail-head"><span class="mail-from">${this.esc(m.from)}</span></div>
+        <div class="mail-subj">${this.esc(m.subj)}</div>
+        <div class="mail-prev">${this.esc(m.prev)}</div>
+        <div class="mail-btns"></div>`;
+      const btnWrap=row.querySelector(".mail-btns");
+      const btns={};
+      order.forEach(act=>{
+        const b=document.createElement("button");b.className="mail-act";b.type="button";b.textContent=acts[act];
+        b.dataset.act=act;
+        b.onclick=()=>{if(done)return;
+          chosen[i]=act;
+          Object.values(btns).forEach(x=>x.classList.remove("sel"));
+          b.classList.add("sel");};
+        btns[act]=b;btnWrap.appendChild(b);
+      });
+      row._btns=btns;rowEls.push(row);body.appendChild(row);
+    });
+    const markRow=(i,correctAct,userAct)=>{
+      const btns=rowEls[i]._btns;
+      Object.values(btns).forEach(x=>{x.disabled=true;});
+      btns[correctAct].classList.add("correct");
+      if(userAct&&userAct!==correctAct)btns[userAct].classList.add("wrong");
+    };
+    if(done){
+      a.mails.forEach((m,i)=>markRow(i,m.action,null));
+      foot.insertAdjacentHTML("beforeend",this.lockNote(a));
+      showFB(this.state.acts[a.id].correct,a.explain);return;
+    }
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Postfach prüfen";
+    chk.onclick=()=>{
+      if(Object.keys(chosen).length<a.mails.length){this.toast("Bitte bei jeder Mail entscheiden.");return;}
+      let right=0;
+      a.mails.forEach((m,i)=>{const ok=chosen[i]===m.action;if(ok)right++;markRow(i,m.action,chosen[i]);});
+      const allRight=right===a.mails.length;
+      const pts=this.hintAdjust(a,Math.round(right/a.mails.length*this.actMax(a)));
+      showFB(allRight,`${right} von ${a.mails.length} richtig einsortiert. ${a.explain}`);
+      chk.remove();this.complete(a,pts,allRight);
+    };
+    foot.appendChild(chk);
+  },
+
+  /* FORMFILL – Online-Formular ausfüllen */
+  formValid(f,val){
+    // val: string (text/select) oder {ok:bool} für Datei. Gibt {ok,msg} zurück.
+    if(f.type==="file"){
+      if(!val)return {ok:false,msg:"Bitte die PDF-Datei wählen (die andere ist zu groß)."};
+      return val.ok?{ok:true,msg:""}:{ok:false,msg:"Bitte die PDF-Datei wählen (die andere ist zu groß)."};
+    }
+    if(f.type==="select"){
+      if(!val||val==="0")return {ok:false,msg:"Bitte eine Stelle wählen."};
+      return {ok:true,msg:""};
+    }
+    const v=(val||"").trim();
+    if(f.required&&v===""){return {ok:false,msg:"Bitte ausfüllen."};}
+    if(f.rule==="email"){return /.+@.+\..+/.test(v)?{ok:true,msg:""}:{ok:false,msg:"Die E-Mail braucht ein @ und einen Punkt."};}
+    if(f.rule==="plz"){return /^\d{5}$/.test(v)?{ok:true,msg:""}:{ok:false,msg:"PLZ = 5 Ziffern."};}
+    if(f.rule==="date"){return /^\d{2}\.\d{2}\.\d{4}$/.test(v)?{ok:true,msg:""}:{ok:false,msg:"Datum im Format TT.MM.JJJJ eingeben."};}
+    return {ok:true,msg:""};
+  },
+  r_formfill(a,body,foot,showFB,done){
+    if(done){
+      body.innerHTML=`<p class="muted">✔️ Formular abgeschickt.</p>`;
+      foot.insertAdjacentHTML("beforeend",this.lockNote(a));
+      showFB(this.state.acts[a.id].correct,a.explain);return;
+    }
+    const form=document.createElement("div");form.className="ffform";
+    const state={};   // key -> value (string) oder für file: {ok}
+    a.fields.forEach(f=>{
+      const fld=document.createElement("div");fld.className="ff-field";
+      const lab=document.createElement("label");lab.className="ff-label";lab.textContent=f.label+(f.required?" *":"");
+      fld.appendChild(lab);
+      if(f.type==="text"){
+        const inp=document.createElement("input");inp.type="text";inp.className="ff-input";
+        inp.oninput=()=>{state[f.key]=inp.value;};
+        fld._input=inp;fld.appendChild(inp);
+      }else if(f.type==="select"){
+        const sel=document.createElement("select");sel.className="ff-input";
+        f.options.forEach((o,i)=>{const op=document.createElement("option");op.value=String(i);op.textContent=o;sel.appendChild(op);});
+        sel.onchange=()=>{state[f.key]=sel.value;};
+        fld._input=sel;fld.appendChild(sel);
+      }else if(f.type==="file"){
+        const box=document.createElement("div");box.className="ff-file";
+        const btn=document.createElement("button");btn.type="button";btn.className="ff-filebtn";btn.textContent="📎 Datei wählen";
+        const menu=document.createElement("div");menu.className="ff-filemenu hidden";
+        const shown=document.createElement("div");shown.className="ff-fileshown muted";shown.textContent="Keine Datei gewählt";
+        f.files.forEach(file=>{
+          const fb=document.createElement("button");fb.type="button";fb.className="ff-fileopt";fb.textContent=file.name;
+          fb.onclick=()=>{state[f.key]=file;shown.textContent="Gewählt: "+file.name;shown.className="ff-fileshown";menu.classList.add("hidden");};
+          menu.appendChild(fb);
+        });
+        btn.onclick=()=>menu.classList.toggle("hidden");
+        box.appendChild(btn);box.appendChild(menu);box.appendChild(shown);
+        fld._box=box;fld.appendChild(box);
+      }
+      const err=document.createElement("div");err.className="ff-err";fld._err=err;fld.appendChild(err);
+      fld._f=f;form.appendChild(fld);
+    });
+    body.appendChild(form);
+    const chk=document.createElement("button");chk.className="checkbtn";chk.textContent="Absenden";
+    chk.onclick=()=>{
+      let right=0;
+      [...form.children].forEach(fld=>{
+        const f=fld._f;
+        const val=(f.type==="file")?state[f.key]:(state[f.key]!==undefined?state[f.key]:(f.type==="select"?"0":""));
+        const res=this.formValid(f,val);
+        const inpEl=fld._input||fld._box;
+        if(res.ok){right++;fld._err.textContent="";inpEl&&inpEl.classList&&inpEl.classList.remove("ff-bad");inpEl&&inpEl.classList&&inpEl.classList.add("ff-good");}
+        else{fld._err.textContent=res.msg;inpEl&&inpEl.classList&&inpEl.classList.add("ff-bad");}
+      });
+      const allRight=right===a.fields.length;
+      const pts=this.hintAdjust(a,Math.round(right/a.fields.length*this.actMax(a)));
+      if(allRight){
+        [...form.querySelectorAll("input,select,button")].forEach(e=>e.disabled=true);
+        showFB(true,"✅ Formular erfolgreich abgeschickt! "+a.explain);
+        chk.remove();this.complete(a,pts,true);
+      }else{
+        showFB(false,`${right} von ${a.fields.length} Feldern richtig. Bitte die rot markierten Felder korrigieren. ${a.explain}`);
+        chk.remove();this.complete(a,pts,false);
+      }
+    };
+    foot.appendChild(chk);
+  },
+
+  /* ---- scoring helpers ---- */
+  scorePts(a,correct){
+    let base=correct?(a.boss?20:10):0;
+    return this.hintAdjust(a,base);
+  },
+  hintAdjust(a,base){
+    const s=this.state.acts[a.id];
+    // hint cost already deducted from global points when used; here we keep awarded >=0
+    return Math.max(0,base);
+  },
+
+  shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+};
+
+document.addEventListener("DOMContentLoaded",()=>CA.boot());
+</script>
+</body>
+</html>
