@@ -1414,6 +1414,7 @@ const CA = {
     a.options.forEach((o,i)=>{
       const b=document.createElement("button");b.className="opt";b.textContent=o;
       b.onclick=()=>{if(done)return;
+        if(chosen===i){b.classList.remove("sel");chosen=-1;return;} // 2. Klick = Auswahl aufheben
         [...body.children].forEach(c=>c.classList.remove("sel"));b.classList.add("sel");chosen=i;};
       body.appendChild(b);
     });
